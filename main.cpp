@@ -303,7 +303,7 @@ string decode_lsb_alt(IplImage* img)
 	return text.substr(sizeof(int) * 2, size);
 }
 
-IplImage* encode_dct(IplImage* carrier, string secret_bin, int persistence = 100)
+IplImage* encode_dct(IplImage* carrier, string secret_bin, int persistence = 25)
 {
 	int secret_bin_i = 0;
 	int secret_length = secret_bin.length() * 8;
@@ -314,9 +314,9 @@ IplImage* encode_dct(IplImage* carrier, string secret_bin, int persistence = 100
 	// 3 6
 	// 5 2
 
-	int s1x = 3;
-	int s1y = 6;
-	int s2x = 5;
+	int s1x = 2;
+	int s1y = 1;
+	int s2x = 2;
 	int s2y = 2;
 
 	int width = carrier->width;
@@ -328,12 +328,12 @@ IplImage* encode_dct(IplImage* carrier, string secret_bin, int persistence = 100
 	auto car = cvarrToMat(carrier);
 	Mat carf;
 	car.convertTo(carf, CV_64FC1); // 1.0/255
-	vector<Mat> planes;
-	split(carf, planes);
+	/*vector<Mat> planes;
+	split(carf, planes);*/
 
-	for (int gx = 1; gx < (grid_width / 2); gx++)
+	for (int gx = 1; gx < grid_width - block_width; gx++)
 	{
-		for (int gy = 1; gy < (grid_height / 2); gy++)
+		for (int gy = 1; gy < grid_height - block_height; gy++)
 		{
 			int cx = (gx - 1) * block_width;
 			int cy = (gy - 1) * block_height;
@@ -341,7 +341,7 @@ IplImage* encode_dct(IplImage* carrier, string secret_bin, int persistence = 100
 			int posx = cx + block_width;
 			int posy = cy + block_height;
 
-			Mat block(planes[0], Rect(cx, cy, posx, posy));
+			Mat block(carf, Rect(cx, cy, block_width, block_height));
 			Mat blout(Size(block_width, block_height), block.type());
 			dct(block, blout);
 
@@ -394,15 +394,15 @@ IplImage* encode_dct(IplImage* carrier, string secret_bin, int persistence = 100
 			Mat blsteg(Size(block_width, block_height), block.type());
 			idct(blout, blsteg);
 
-			blsteg.copyTo(planes[0](Rect(cx, cy, posx, posy)));
+			blsteg.copyTo(carf(Rect(cx, cy, block_width, block_height)));
 		}
 	}
 
-	Mat merged;
-	merge(planes, merged);
+	/*Mat merged;
+	merge(planes, merged);*/
 
 	Mat mergedi;
-	merged.convertTo(mergedi, CV_8U);
+	carf.convertTo(mergedi, CV_8U);
 
 	return cvCloneImage(&(IplImage)mergedi);
 }
@@ -412,9 +412,9 @@ string decode_dct(IplImage* stego)
 	int block_width = 8;
 	int block_height = 8;
 
-	int s1x = 3;
-	int s1y = 6;
-	int s2x = 5;
+	int s1x = 2;
+	int s1y = 1;
+	int s2x = 2;
 	int s2y = 2;
 
 	int width = stego->width;
@@ -429,8 +429,8 @@ string decode_dct(IplImage* stego)
 	auto car = cvarrToMat(stego);
 	Mat carf;
 	car.convertTo(carf, CV_64FC1);
-	vector<Mat> planes;
-	split(carf, planes);
+	/*vector<Mat> planes;
+	split(carf, planes);*/
 
 	for (int gx = 1; gx < (grid_width / 2); gx++)
 	{
@@ -442,7 +442,7 @@ string decode_dct(IplImage* stego)
 			int posx = cx + block_width;
 			int posy = cy + block_height;
 
-			Mat block(planes[0], Rect(cx, cy, posx, posy));
+			Mat block(carf, Rect(cx, cy, block_width, block_height));
 			Mat blout(Size(block_width, block_height), block.type());
 			dct(block, blout);
 
@@ -496,17 +496,17 @@ void encode_dwt(IplImage* img, string secret_bin, float alpha = 0.05)
 
 int main(int argc, char** argv)
 {
-	auto img = cvLoadImage("img_small.png", CV_LOAD_IMAGE_COLOR);
+	auto img = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
 	cvNamedWindow("Image", NULL);
-	cvResizeWindow("Image", 640, 400);
+	cvResizeWindow("Image", 512, 512);
 	//cvShowImage("Image", img);
 	//showHistogram(img, "Pre-Steganography Histogram");
 
 	//encode_lsb_alt(img, read_file("test.txt"));
 	//cout << decode_lsb_alt(img);
 
-	encode_dwt(img, "arvizturo tukorfurogep arvizturo tukorfurogep arvizturo tukorfurogep arvizturo tukorfurogep arvizturo tukorfurogep");
-	//cout << decode_dct(img);
+	auto img2 = encode_dct(img, "arvizturo tukorfurogep arvizturo tukorfurogep arvizturo tukorfurogep arvizturo tukorfurogep arvizturo tukorfurogep");
+	cout << decode_dct(img2);
 
 	//showHistogram(img, "Post-Steganography Histogram");
 
