@@ -27,7 +27,7 @@ void print_debug(const string& input, const string& output)
 	auto extracted = clean(output);
 	auto accuracy  = similarity(original, extracted);
 
-	auto color = Format::White;
+	Format::ColorCode color;
 
 	if (accuracy > 99.99)
 	{
@@ -101,8 +101,8 @@ void test_lsb_alt()
 	show_image(img, "Original");
 
 	auto input  = read_file("test.txt");
-	auto stego  = encode_lsb_alt(img, input);
-	auto output = decode_lsb_alt(stego);
+	auto stego  = encode_lsb_alt(img, encode_tlv(input));
+	auto output = decode_tlv(decode_lsb_alt(stego));
 
 	print_debug(input, output);
 
@@ -157,10 +157,10 @@ int main(int argc, char** argv)
 {
 	Format::Init();
 
-	test_lsb();
+	//test_lsb();
 	//test_lsb_alt();
 	//test_dct();
-	//test_dwt();
+	test_dwt();
 
 	cvWaitKey();
 

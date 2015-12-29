@@ -1,15 +1,17 @@
 #pragma once
 #include <opencv2/core/core.hpp>
+#include "helpers.hpp"
 
 /*!
  * Hides data in an image by manipulating the least significant bits of each pixel.
  *
  * \param img Input image.
  * \param text Text to hide.
+ * \param mode Storage mode, see STORE_* constants.
  *
  * \return Altered image with hidden data.
  */
-inline cv::Mat encode_lsb(const cv::Mat& img, const std::string& text)
+inline cv::Mat encode_lsb(const cv::Mat& img, const std::string& text, int mode = STORE_ONCE)
 {
 	using namespace cv;
 	using namespace std;
@@ -29,23 +31,34 @@ inline cv::Mat encode_lsb(const cv::Mat& img, const std::string& text)
 				auto val = img.at<Vec3b>(i, j)[k];
 
 				val &= 254;
-				val |= (text[b / 8] & 1 << b % 8) >> b % 8;
+
+				if (b < bits)
+				{
+					val |= (text[b / 8] & 1 << b % 8) >> b % 8;
+				}
 
 				stego.at<Vec3b>(i, j)[k] = val;
 
 				if (b++ >= bits)
 				{
-					break;
+					if (mode == STORE_ONCE)
+					{
+						break;
+					}
+					else if (mode == STORE_REPEAT)
+					{
+						b = 0;
+					}
 				}
 			}
 
-			if (b >= bits)
+			if (b >= bits && mode == STORE_ONCE)
 			{
 				break;
 			}
 		}
 
-		if (b >= bits)
+		if (b >= bits && mode == STORE_ONCE)
 		{
 			break;
 		}

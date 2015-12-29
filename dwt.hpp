@@ -78,10 +78,10 @@ inline void cvInvHaarWavelet(const cv::Mat& src, cv::Mat& dst, const std::vector
 
 			auto c = src.at<float>(y, x);
 
-			dst.at<float>(y * 2,     x * 2)     = 0.5*(c + dh + dv + dd);
-			dst.at<float>(y * 2,     x * 2 + 1) = 0.5*(c - dh + dv - dd);
-			dst.at<float>(y * 2 + 1, x * 2)     = 0.5*(c + dh - dv - dd);
-			dst.at<float>(y * 2 + 1, x * 2 + 1) = 0.5*(c - dh - dv + dd);
+			dst.at<float>(y * 2,     x * 2)     = 0.5 * (c + dh + dv + dd);
+			dst.at<float>(y * 2,     x * 2 + 1) = 0.5 * (c - dh + dv - dd);
+			dst.at<float>(y * 2 + 1, x * 2)     = 0.5 * (c + dh - dv - dd);
+			dst.at<float>(y * 2 + 1, x * 2 + 1) = 0.5 * (c - dh - dv + dd);
 		}
 	}
 }
@@ -91,12 +91,13 @@ inline void cvInvHaarWavelet(const cv::Mat& src, cv::Mat& dst, const std::vector
  *
  * \param img Input image.
  * \param text Text to hide.
+ * \param mode Storage mode, see STORE_* constants.
  * \param channel Channel to manipulate.
  * \param alpha Encoding intensity.
  *
  * \return Altered image with hidden data.
  */
-inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, int channel = 0, float alpha = 0.05)
+inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, int mode = STORE_FULL, int channel = 0, float alpha = 0.05)
 {
 	using namespace cv;
 	using namespace std;
@@ -138,8 +139,20 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, int chann
 	{
 		for (int x = 0; x < dds[y].size(); x++)
 		{
+			if (i >= size)
+			{
+				if (mode == STORE_ONCE)
+				{
+					break;
+				}
+				else if (mode == STORE_REPEAT)
+				{
+					i = 0;
+				}
+			}
+
 			auto val = 0;
-			if (i <= size)
+			if (i < size)
 			{
 				val = (text[i / 8] & 1 << i % 8) >> i % 8;
 				i++;
@@ -153,6 +166,11 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, int chann
 			{
 				dds[y][x] -= alpha;
 			}
+		}
+
+		if (i >= size && mode == STORE_ONCE)
+		{
+			break;
 		}
 	}
 

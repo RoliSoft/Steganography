@@ -7,6 +7,21 @@
 #include <opencv2/core/core.hpp>
 
 /*!
+ * Stores the specified input once.
+ */
+#define STORE_ONCE   1
+
+/*!
+ * Stores the specified input and fills the rest of the available space with zeros.
+ */
+#define STORE_FULL   2
+
+/*!
+ * Stores the specified input in a repeating manner.
+ */
+#define STORE_REPEAT 3
+
+/*!
  * Returns the similarity between the original message and extracted message.
  *
  * \param original Original data.

@@ -6,12 +6,13 @@
  *
  * \param img Input image.
  * \param text Text to hide.
+ * \param mode Storage mode, see STORE_* constants.
  * \param channel Channel to manipulate.
  * \param intensity Persistence of the hidden data.
  *
  * \return Altered image with hidden data.
  */
-inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int channel = 0, int intensity = 25)
+inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int mode = STORE_FULL, int channel = 0, int intensity = 25)
 {
 	using namespace cv;
 	using namespace std;
@@ -45,8 +46,20 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int chann
 			auto a = trans.at<float>(6, 7);
 			auto b = trans.at<float>(5, 1);
 			
+			if (i >= size)
+			{
+				if (mode == STORE_ONCE)
+				{
+					break;
+				}
+				else if (mode == STORE_REPEAT)
+				{
+					i = 0;
+				}
+			}
+
 			auto val = 0;
-			if (i <= size)
+			if (i < size)
 			{
 				val = (text[i / 8] & 1 << i % 8) >> i % 8;
 				i++;
@@ -88,6 +101,11 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int chann
 			idct(trans, stego);
 
 			stego.copyTo(planes[channel](Rect(px, py, block_width, block_height)));
+		}
+
+		if (i >= size && mode == STORE_ONCE)
+		{
+			break;
 		}
 	}
 
