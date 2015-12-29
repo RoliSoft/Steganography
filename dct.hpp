@@ -24,7 +24,7 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int inten
 	auto size = text.length() * 8;
 
 	Mat imgfp;
-	img.convertTo(imgfp, CV_64FC1);
+	img.convertTo(imgfp, CV_32F);
 
 	vector<Mat> planes;
 	split(imgfp, planes);
@@ -41,8 +41,8 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int inten
 
 			dct(block, trans);
 
-			auto a = trans.at<long float>(6, 7);
-			auto b = trans.at<long float>(5, 1);
+			auto a = trans.at<float>(6, 7);
+			auto b = trans.at<float>(5, 1);
 			
 			auto val = 0;
 			if (i <= size)
@@ -79,8 +79,8 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int inten
 				     b = b + d;
 			}
 
-			trans.at<long float>(6, 7) = a;
-			trans.at<long float>(5, 1) = b;
+			trans.at<float>(6, 7) = a;
+			trans.at<float>(5, 1) = b;
 
 			Mat stego(Size(block_width, block_height), block.type());
 
@@ -120,7 +120,7 @@ inline std::string decode_dct(const cv::Mat& img)
 	string bits(grid_width * grid_height / 8, 0);
 
 	Mat imgfp;
-	img.convertTo(imgfp, CV_64FC1);
+	img.convertTo(imgfp, CV_32F);
 
 	vector<Mat> planes;
 	split(imgfp, planes);
@@ -137,8 +137,8 @@ inline std::string decode_dct(const cv::Mat& img)
 
 			dct(block, trans);
 
-			auto a = trans.at<long float>(6, 7);
-			auto b = trans.at<long float>(5, 1);
+			auto a = trans.at<float>(6, 7);
+			auto b = trans.at<float>(5, 1);
 
 			if (a > b)
 			{

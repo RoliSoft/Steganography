@@ -183,10 +183,10 @@ inline std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
 	string bits((img.cols / 2) * (img.rows  / 2) / 8, 0);
 
 	Mat imgfp;
-	img.convertTo(imgfp, CV_32FC1, 1.0 / 255);
+	img.convertTo(imgfp, CV_32F, 1.0 / 255);
 
 	Mat stegofp;
-	stego.convertTo(stegofp, CV_32FC1, 1.0 / 255);
+	stego.convertTo(stegofp, CV_32F, 1.0 / 255);
 
 	vector<Mat> planes1;
 	split(imgfp, planes1);
