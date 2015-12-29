@@ -15,13 +15,8 @@ inline cv::Mat encode_lsb_alt(const cv::Mat& img, const std::string& text)
 	using namespace cv;
 	using namespace std;
 
-	int size = text.length();
-	int xize = ~size;
-
-	auto data = string(reinterpret_cast<char*>(&size), sizeof(int)) + string(reinterpret_cast<char*>(&xize), sizeof(int)) + text;
-
 	int b = 0;
-	int bits = data.length() * 8 + 7;
+	int bits = text.length() * 8 + 7;
 
 	Mat stego;
 	img.copyTo(stego);
@@ -33,7 +28,7 @@ inline cv::Mat encode_lsb_alt(const cv::Mat& img, const std::string& text)
 			auto val = img.at<Vec3b>(i, j)[b % img.channels()];
 
 			val &= 254;
-			val |= (data[b / 8] & 1 << b % 8) >> b % 8;
+			val |= (text[b / 8] & 1 << b % 8) >> b % 8;
 
 			stego.at<Vec3b>(i, j)[b % img.channels()] = val;
 
@@ -80,13 +75,5 @@ inline std::string decode_lsb_alt(const cv::Mat& img)
 		}
 	}
 
-	auto size = *reinterpret_cast<const int*>(text.c_str());
-	auto xize = *reinterpret_cast<const int*>(text.c_str() + sizeof(int));
-
-	if (xize != ~size)
-	{
-		return "";
-	}
-
-	return text.substr(sizeof(int) * 2, size);
+	return text;
 }

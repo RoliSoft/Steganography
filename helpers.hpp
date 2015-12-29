@@ -14,7 +14,7 @@
  *
  * \return Similarity in percentages.
  */
-float similarity(const std::string& original, const std::string& extracted)
+inline float similarity(const std::string& original, const std::string& extracted)
 {
 	auto hits = 0;
 
@@ -37,7 +37,7 @@ float similarity(const std::string& original, const std::string& extracted)
  *
  * \return Recovered string.
  */
-std::string repair(const std::vector<std::string>& texts)
+inline std::string repair(const std::vector<std::string>& texts)
 {
 	using namespace std;
 

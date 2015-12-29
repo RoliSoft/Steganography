@@ -9,6 +9,7 @@
 #include "lsb_alt.hpp"
 #include "dct.hpp"
 #include "dwt.hpp"
+#include "tlv.hpp"
 
 using namespace cv;
 using namespace std;
@@ -82,8 +83,8 @@ void test_lsb()
 	show_image(img, "Original");
 
 	auto input  = read_file("test.txt");
-	auto stego  = encode_lsb(img, input);
-	auto output = decode_lsb(stego);
+	auto stego  = encode_lsb(img, encode_tlv(input));
+	auto output = decode_tlv(decode_lsb(stego));
 
 	print_debug(input, output);
 
@@ -156,10 +157,10 @@ int main(int argc, char** argv)
 {
 	Format::Init();
 
-	//test_lsb();
+	test_lsb();
 	//test_lsb_alt();
 	//test_dct();
-	test_dwt();
+	//test_dwt();
 
 	cvWaitKey();
 

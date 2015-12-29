@@ -41,5 +41,8 @@
     <ClInclude Include="format.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="tlv.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
