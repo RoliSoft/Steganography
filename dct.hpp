@@ -2,15 +2,16 @@
 #include <opencv2/core/core.hpp>
 
 /*!
- * Uses discrete cosine transformation to hide data in the coefficients of the first plane of an image.
+ * Uses discrete cosine transformation to hide data in the coefficients of a channel of an image.
  *
  * \param img Input image.
  * \param text Text to hide.
+ * \param channel Channel to manipulate.
  * \param intensity Persistence of the hidden data.
  *
  * \return Altered image with hidden data.
  */
-inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int intensity = 25)
+inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int channel = 0, int intensity = 25)
 {
 	using namespace cv;
 	using namespace std;
@@ -36,7 +37,7 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int inten
 			auto px = (x - 1) * block_width;
 			auto py = (y - 1) * block_height;
 
-			Mat block(planes[0], Rect(px, py, block_width, block_height));
+			Mat block(planes[channel], Rect(px, py, block_width, block_height));
 			Mat trans(Size(block_width, block_height), block.type());
 
 			dct(block, trans);
@@ -86,7 +87,7 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int inten
 
 			idct(trans, stego);
 
-			stego.copyTo(planes[0](Rect(px, py, block_width, block_height)));
+			stego.copyTo(planes[channel](Rect(px, py, block_width, block_height)));
 		}
 	}
 
@@ -103,10 +104,11 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int inten
  * Uses discrete cosine transformation to recover data hidden in the coefficients of an image.
  *
  * \param img Input image with hidden data.
+ * \param channel Channel to manipulate.
  *
  * \return Hidden data extracted form image.
  */
-inline std::string decode_dct(const cv::Mat& img)
+inline std::string decode_dct(const cv::Mat& img, int channel = 0)
 {
 	using namespace cv;
 	using namespace std;
@@ -132,7 +134,7 @@ inline std::string decode_dct(const cv::Mat& img)
 			auto px = (x - 1) * block_width;
 			auto py = (y - 1) * block_height;
 
-			Mat block(planes[0], Rect(px, py, block_width, block_height));
+			Mat block(planes[channel], Rect(px, py, block_width, block_height));
 			Mat trans(Size(block_width, block_height), block.type());
 
 			dct(block, trans);

@@ -87,15 +87,16 @@ inline void cvInvHaarWavelet(const cv::Mat& src, cv::Mat& dst, const std::vector
 }
 
 /*!
- * Uses discrete wavelet transformation to hide data in the diagonal filter of the first plane of an image.
+ * Uses discrete wavelet transformation to hide data in the diagonal filter of a channel of an image.
  *
  * \param img Input image.
  * \param text Text to hide.
+ * \param channel Channel to manipulate.
  * \param alpha Encoding intensity.
  *
  * \return Altered image with hidden data.
  */
-inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alpha = 0.05)
+inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, int channel = 0, float alpha = 0.05)
 {
 	using namespace cv;
 	using namespace std;
@@ -113,7 +114,7 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 	{
 		for (int x = 0; x < img.cols; x++)
 		{
-			auto val = planes[0].at<float>(y, x);
+			auto val = planes[channel].at<float>(y, x);
 
 			if (val < alpha)
 			{
@@ -124,13 +125,13 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 				val = 1 - alpha;
 			}
 
-			planes[0].at<float>(y, x) = val;
+			planes[channel].at<float>(y, x) = val;
 		}
 	}
 
 	Mat haar(img.rows, img.cols, CV_32FC1);
 
-	auto hwv = cvHaarWavelet(planes[0], haar);
+	auto hwv = cvHaarWavelet(planes[channel], haar);
 	auto dds = get<2>(hwv);
 
 	for (int y = 0; y < dds.size(); y++)
@@ -155,7 +156,7 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 		}
 	}
 
-	cvInvHaarWavelet(haar, planes[0], get<0>(hwv), get<1>(hwv), dds);
+	cvInvHaarWavelet(haar, planes[channel], get<0>(hwv), get<1>(hwv), dds);
 
 	Mat mergedfp;
 	merge(planes, mergedfp);
@@ -171,10 +172,11 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
  *
  * \param img Original image without hidden data.
  * \param stego Altered image with hidden data.
+ * \param channel Channel to manipulate.
  *
  * \return Hidden data extracted form image.
  */
-inline std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
+inline std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego, int channel = 0)
 {
 	using namespace cv;
 	using namespace std;
@@ -197,8 +199,8 @@ inline std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
 	Mat haar1(img.rows, img.cols, CV_32FC1);
 	Mat haar2(img.rows, img.cols, CV_32FC1);
 
-	auto dds1 = get<2>(cvHaarWavelet(planes1[0], haar1));
-	auto dds2 = get<2>(cvHaarWavelet(planes2[0], haar2));
+	auto dds1 = get<2>(cvHaarWavelet(planes1[channel], haar1));
+	auto dds2 = get<2>(cvHaarWavelet(planes2[channel], haar2));
 
 	for (int y = 0; y < dds1.size(); y++)
 	{
