@@ -1,3 +1,6 @@
+### Project Files ###
+/test/*_d[cw]t.*
+
 ### C++ ###
 # Compiled Object files
 *.slo
