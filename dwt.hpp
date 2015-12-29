@@ -97,7 +97,7 @@ inline void cvInvHaarWavelet(const cv::Mat& src, cv::Mat& dst, const std::vector
  *
  * \return Altered image with hidden data.
  */
-inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, int mode = STORE_FULL, int channel = 0, float alpha = 0.05)
+inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, int mode = STORE_FULL, int channel = 0, float alpha = 0.1)
 {
 	using namespace cv;
 	using namespace std;

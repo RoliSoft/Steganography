@@ -128,6 +128,36 @@ void test_dct()
 }
 
 /*!
+ * Tests the discrete cosine transformation method with 80% JPEG compression
+ * and multi-channel message reconstruction.
+ */
+void test_dct_multi()
+{
+	auto img = imread("lena.jpg");
+
+	show_image(img, "Original");
+
+	auto input = read_file("test.txt");
+	auto stego = encode_dct(img,   input, STORE_FULL, 0);
+	     stego = encode_dct(stego, input, STORE_FULL, 1);
+		 stego = encode_dct(stego, input, STORE_FULL, 2);
+
+	imwrite("lena_dct.jpg", stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, 80 });
+	stego = imread("lena_dct.jpg");
+
+	auto output = repair(vector<string>
+		{
+			decode_dct(stego, 0),
+			decode_dct(stego, 1),
+			decode_dct(stego, 2)
+		});
+
+	print_debug(input, output);
+
+	show_image(stego, "Altered");
+}
+
+/*!
  * Tests the discrete wavelet transformation method.
  */
 void test_dwt()
@@ -139,6 +169,36 @@ void test_dwt()
 	auto input  = read_file("test.txt");
 	auto stego  = encode_dwt(img, input);
 	auto output = decode_dwt(img, stego);
+
+	print_debug(input, output);
+
+	show_image(stego, "Altered");
+}
+
+/*!
+ * Tests the discrete wavelet transformation method with 90% JPEG compression
+ * and multi-channel message reconstruction.
+ */
+void test_dwt_multi()
+{
+	auto img = imread("lena.jpg");
+
+	show_image(img, "Original");
+
+	auto input = read_file("test.txt");
+	auto stego = encode_dwt(img,   input, STORE_FULL, 0);
+	     stego = encode_dwt(stego, input, STORE_FULL, 1);
+		 stego = encode_dwt(stego, input, STORE_FULL, 2);
+
+	imwrite("lena_dwt.jpg", stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, 90 });
+	stego = imread("lena_dwt.jpg");
+
+	auto output = repair(vector<string>
+		{
+			decode_dwt(img, stego, 0),
+			decode_dwt(img, stego, 1),
+			decode_dwt(img, stego, 2)
+		});
 
 	print_debug(input, output);
 
@@ -160,7 +220,9 @@ int main(int argc, char** argv)
 	//test_lsb();
 	//test_lsb_alt();
 	//test_dct();
-	test_dwt();
+	test_dct_multi();
+	//test_dwt();
+	//test_dwt_multi();
 
 	cvWaitKey();
 

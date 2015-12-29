@@ -12,7 +12,7 @@
  *
  * \return Altered image with hidden data.
  */
-inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int mode = STORE_FULL, int channel = 0, int intensity = 25)
+inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int mode = STORE_FULL, int channel = 0, int intensity = 30)
 {
 	using namespace cv;
 	using namespace std;
