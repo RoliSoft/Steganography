@@ -12,7 +12,7 @@
  *
  * \return Contents of the file.
  */
-inline std::string read_file(std::string file)
+inline std::string read_file(const std::string& file)
 {
 	std::ifstream fs(file);
 	std::string text((std::istreambuf_iterator<char>(fs)), std::istreambuf_iterator<char>());
@@ -24,15 +24,19 @@ inline std::string read_file(std::string file)
  * Removes non-printable characters from the input and trims any leading or trailing whitespace.
  *
  * \param text Text to be cleaned.
+ *
+ * \return Cleaned text.
  */
-inline void clean(std::string& text)
+inline std::string clean(const std::string& text)
 {
-	text.erase(remove_if(text.begin(), text.end(), [](char c)
+	auto copy(text);
+	copy.erase(remove_if(copy.begin(), copy.end(), [](char c)
 		{
 			static auto l = boost::is_print(std::locale());
 			return !l(c) && c != '\r' && c != '\n';
-		}), text.end());
-	boost::trim(text);
+		}), copy.end());
+	boost::trim(copy);
+	return copy;
 }
 
 /*!

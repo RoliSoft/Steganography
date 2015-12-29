@@ -160,11 +160,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="format.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dct.hpp" />
     <ClInclude Include="dwt.hpp" />
+    <ClInclude Include="format.h" />
     <ClInclude Include="helpers.hpp" />
     <ClInclude Include="lsb.hpp" />
     <ClInclude Include="lsb_alt.hpp" />
