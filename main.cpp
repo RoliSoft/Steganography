@@ -12,6 +12,9 @@ using namespace cv;
 using namespace std;
 using namespace boost;
 
+/*!
+ * Tests the least significat bit method.
+ */
 void test_lsb()
 {
 	auto img = imread("img_small.png");
@@ -41,6 +44,9 @@ void test_lsb()
 	moveWindow("Post-Steganography Histogram", 565, 595);
 }
 
+/*!
+ * Tests the alternate least significat bit method.
+ */
 void test_lsb_alt()
 {
 	auto img = imread("img_small.png");
@@ -70,6 +76,9 @@ void test_lsb_alt()
 	moveWindow("Post-Steganography Histogram", 565, 595);
 }
 
+/*!
+ * Tests the discrete cosine transformation method.
+ */
 void test_dct()
 {
 	auto img = imread("lena.jpg");
@@ -99,6 +108,9 @@ void test_dct()
 	moveWindow("Post-Steganography Histogram", 565, 595);
 }
 
+/*!
+ * Tests the discrete wavelet transformation method.
+ */
 void test_dwt()
 {
 	auto img = imread("lena.jpg");
@@ -128,12 +140,20 @@ void test_dwt()
 	moveWindow("Post-Steganography Histogram", 565, 595);
 }
 
+/*!
+ * Entry point of the application.
+ *
+ * \param Number of arguments.
+ * \param Argument array pointer.
+ *
+ * \return Value indicating exit status.
+ */
 int main(int argc, char** argv)
 {
 	//test_lsb();
 	//test_lsb_alt();
-	//test_dct();
-	test_dwt();
+	test_dct();
+	//test_dwt();
 
 	cvWaitKey();
 
