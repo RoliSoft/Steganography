@@ -78,13 +78,18 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 	auto size = text.length() * 8;
 
 	Mat imgfp;
-	img.convertTo(imgfp, CV_32FC1, 1.0 / 255);
+	img.convertTo(imgfp, CV_32F, 1.0 / 255);
 
-	for (int y = 0;y < imgfp.cols;y++)
+	vector<Mat> planes;
+	split(imgfp, planes);
+
+	Mat plane = planes[0];
+
+	for (int y = 0;y < plane.cols; y++)
 	{
-		for (int x = 0; x < imgfp.cols;x++)
+		for (int x = 0; x < plane.cols; x++)
 		{
-			auto val = imgfp.at<float>(y, x);
+			auto val = plane.at<float>(y, x);
 
 			if (val < alpha)
 			{
@@ -95,20 +100,15 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 				val = 1 - alpha;
 			}
 
-			imgfp.at<float>(y, x) = val;
+			plane.at<float>(y, x) = val;
 		}
 	}
 
-	Mat GrayFrame = Mat(imgfp.rows, imgfp.cols, CV_8UC1);
-	Mat Src = Mat(imgfp.rows, imgfp.cols, CV_32FC1);
-	Mat Dst = Mat(imgfp.rows, imgfp.cols, CV_32FC1);
-	Mat Temp = Mat(imgfp.rows, imgfp.cols, CV_32FC1);
-	Mat Filtered = Mat(imgfp.rows, imgfp.cols, CV_32FC1);
+	Mat Dst = Mat(plane.rows, plane.cols, CV_32FC1);
+	Mat Temp = Mat(plane.rows, plane.cols, CV_32FC1);
+	Mat Filtered = Mat(plane.rows, plane.cols, CV_32FC1);
 
-	cvtColor(imgfp, GrayFrame, CV_BGR2GRAY);
-	GrayFrame.convertTo(Src, CV_32FC1);
-
-	auto params = cvHaarWavelet(Src, Dst);
+	auto params = cvHaarWavelet(plane, Dst);
 	auto dds = get<2>(params);
 
 	for (int y = 0; y < dds.size(); y++)
@@ -134,18 +134,22 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 	}
 
 	Dst.copyTo(Temp);
+
 	cvInvHaarWavelet(Temp, Filtered, get<0>(params), get<1>(params), dds);
 
 	/*imshow("Image Haar", Dst);
 	imshow("Image Inv", Filtered);*/
 
-	/*Mat mergedfp;
+	Filtered.copyTo(planes[0]);
+
+	Mat mergedfp;
 	merge(planes, mergedfp);
 
-	Mat merged;
+	/*Mat merged;
 	mergedfp.convertTo(merged, CV_8U);*/
 
-	return Filtered;
+	//imshow("Image Res", mergedfp);
+	return mergedfp;
 }
 
 std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
@@ -159,23 +163,23 @@ std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
 	Mat imgfp;
 	img.convertTo(imgfp, CV_32FC1, 1.0 / 255);
 
-	/*Mat stegofp;
-	stego.convertTo(stegofp, CV_32FC1, 1.0 / 255);*/
+	Mat stegofp;
+	stego.convertTo(stegofp, CV_32FC1);
 
-	Mat GrayFrame1 = Mat(imgfp.rows, imgfp.cols, CV_8UC1);
-	//Mat GrayFrame2 = Mat(imgfp.rows, imgfp.cols, CV_8UC1);
-	Mat Src1 = Mat(imgfp.rows, imgfp.cols, CV_32FC1);
-	Mat Dst1 = Mat(imgfp.rows, imgfp.cols, CV_32FC1);
-	Mat Src2 = Mat(imgfp.rows, imgfp.cols, CV_32FC1);
-	Mat Dst2 = Mat(imgfp.rows, imgfp.cols, CV_32FC1);
-	cvtColor(imgfp, GrayFrame1, CV_BGR2GRAY);
-	GrayFrame1.convertTo(Src1, CV_32FC1);
-	/*cvtColor(stegofp, GrayFrame2, CV_BGR2GRAY);
-	GrayFrame2.convertTo(Src2, CV_32FC1);*/
-	Src2 = stego;
+	vector<Mat> planes1;
+	split(imgfp, planes1);
 
-	auto ddo = get<2>(cvHaarWavelet(Src1, Dst1));
-	auto dds = get<2>(cvHaarWavelet(Src2, Dst2));
+	vector<Mat> planes2;
+	split(stegofp, planes2);
+
+	Mat plane1 = planes1[0];
+	Mat plane2 = planes2[0];
+
+	Mat Dst1 = Mat(img.rows, img.cols, CV_32FC1);
+	Mat Dst2 = Mat(img.rows, img.cols, CV_32FC1);
+
+	auto ddo = get<2>(cvHaarWavelet(plane1, Dst1));
+	auto dds = get<2>(cvHaarWavelet(plane2, Dst2));
 
 	for (int y = 0; y < ddo.size(); y++)
 	{
