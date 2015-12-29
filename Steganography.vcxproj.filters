@@ -20,7 +20,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="helpers.h">
+    <ClInclude Include="dct.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="helpers.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

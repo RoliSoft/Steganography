@@ -3,7 +3,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
 #include <fstream>
-#include "helpers.h"
+#include "helpers.hpp"
+#include "dct.hpp"
 
 using namespace cv;
 using namespace std;
@@ -160,14 +161,6 @@ static void cvInvHaarWavelet(Mat &src, Mat &dst, int NIter, int SHRINKAGE_TYPE =
 	}
 }
 
-string read_file(string file)
-{
-	ifstream fs(file);
-	string text((istreambuf_iterator<char>(fs)), istreambuf_iterator<char>());
-	fs.close();
-	return text;
-}
-
 void encode_lsb(IplImage* img, string text)
 {
 	int size = text.length();
@@ -303,164 +296,6 @@ string decode_lsb_alt(IplImage* img)
 	return text.substr(sizeof(int) * 2, size);
 }
 
-IplImage* encode_dct(IplImage* carrier, string secret_bin, int persistence = 25)
-{
-	int secret_bin_i = 0;
-	int secret_length = secret_bin.length() * 8;
-
-	int block_width = 8;
-	int block_height = 8;
-
-	// 3 6
-	// 5 2
-
-	int s1x = 2;
-	int s1y = 1;
-	int s2x = 2;
-	int s2y = 2;
-
-	int width = carrier->width;
-	int height = carrier->height;
-
-	int grid_width = width / block_width;
-	int grid_height = height / block_height;
-
-	auto car = cvarrToMat(carrier);
-	Mat carf;
-	car.convertTo(carf, CV_64FC1); // 1.0/255
-	/*vector<Mat> planes;
-	split(carf, planes);*/
-
-	for (int gx = 1; gx < grid_width - block_width; gx++)
-	{
-		for (int gy = 1; gy < grid_height - block_height; gy++)
-		{
-			int cx = (gx - 1) * block_width;
-			int cy = (gy - 1) * block_height;
-
-			int posx = cx + block_width;
-			int posy = cy + block_height;
-
-			Mat block(carf, Rect(cx, cy, block_width, block_height));
-			Mat blout(Size(block_width, block_height), block.type());
-			dct(block, blout);
-
-			auto c1 = blout.at<long float>(s1x, s1y);
-			auto c2 = blout.at<long float>(s2x, s2y);
-			
-			int secret_bit;
-			if (secret_bin_i <= secret_length)
-			{
-				secret_bit = (secret_bin[secret_bin_i / 8] & 1 << secret_bin_i % 8) >> secret_bin_i % 8;
-			}
-			else
-			{
-				secret_bit = 0;
-			}
-
-			secret_bin_i++;
-
-			if (secret_bit == 0)
-			{
-				if (c1 > c2)
-				{
-					swap(c1, c2);
-				}
-			}
-			else
-			{
-				if (c1 < c2)
-				{
-					swap(c1, c2);
-				}
-			}
-
-			if (c1 > c2)
-			{
-				auto d = (persistence - (c1 - c2)) / 2;
-				    c1 = c1 + d;
-				    c2 = c2 - d;
-			}
-			else
-			{
-				auto d = (persistence - (c2 - c1)) / 2;
-				    c1 = c1 - d;
-				    c2 = c2 + d;
-			}
-
-			blout.at<long float>(s1x, s1y) = c1;
-			blout.at<long float>(s2x, s2y) = c2;
-
-			Mat blsteg(Size(block_width, block_height), block.type());
-			idct(blout, blsteg);
-
-			blsteg.copyTo(carf(Rect(cx, cy, block_width, block_height)));
-		}
-	}
-
-	/*Mat merged;
-	merge(planes, merged);*/
-
-	Mat mergedi;
-	carf.convertTo(mergedi, CV_8U);
-
-	return cvCloneImage(&(IplImage)mergedi);
-}
-
-string decode_dct(IplImage* stego)
-{
-	int block_width = 8;
-	int block_height = 8;
-
-	int s1x = 2;
-	int s1y = 1;
-	int s2x = 2;
-	int s2y = 2;
-
-	int width = stego->width;
-	int height = stego->height;
-
-	int grid_width = width / block_width;
-	int grid_height = height / block_height;
-
-	string stego_bin((grid_width * grid_height) / 8, 0);
-	int stego_bin_i = 0;
-
-	auto car = cvarrToMat(stego);
-	Mat carf;
-	car.convertTo(carf, CV_64FC1);
-	/*vector<Mat> planes;
-	split(carf, planes);*/
-
-	for (int gx = 1; gx < (grid_width / 2); gx++)
-	{
-		for (int gy = 1; gy < (grid_height / 2); gy++)
-		{
-			int cx = (gx - 1) * block_width;
-			int cy = (gy - 1) * block_height;
-
-			int posx = cx + block_width;
-			int posy = cy + block_height;
-
-			Mat block(carf, Rect(cx, cy, block_width, block_height));
-			Mat blout(Size(block_width, block_height), block.type());
-			dct(block, blout);
-
-			auto c1 = blout.at<long float>(s1x, s1y);
-			auto c2 = blout.at<long float>(s2x, s2y);
-
-			if (c1 > c2)
-			{
-				stego_bin[stego_bin_i / 8] |= 1 << stego_bin_i % 8;
-			}
-
-			stego_bin_i++;
-		}
-	}
-
-	return stego_bin;
-}
-
 void encode_dwt(IplImage* img, string secret_bin, float alpha = 0.05)
 {
 	int secret_msg_bin_len = secret_bin.length();
@@ -488,29 +323,43 @@ void encode_dwt(IplImage* img, string secret_bin, float alpha = 0.05)
 	Dst.copyTo(Temp);
 	cvInvHaarWavelet(Temp, Filtered, 1, HARD, 30);
 
-	cvShowImage("Image2", cvCloneImage(&(IplImage)Filtered));
+	cvShowImage("Image2", cvmatToArr(Filtered));
 
 	/*vector<Mat> planes;
 	split(carf, planes);*/
 }
 
+void test_dct()
+{
+	auto img = imread("lena.jpg");
+
+	namedWindow("Image", NULL);
+	resizeWindow("Image", 512, 512);
+	moveWindow("Image", 50, 50);
+	imshow("Image", img);
+
+	showHistogram(img, "Pre-Steganography Histogram");
+	moveWindow("Pre-Steganography Histogram", 50, 595);
+
+	auto input  = read_file("test.txt");
+	auto stego  = encode_dct(img, input);
+	auto output = decode_dct(stego);
+
+	cout << endl << "   Input:" << endl << endl << input << endl << endl << "   Extracted:" << endl << endl << output << endl;
+
+	namedWindow("Altered Image", NULL);
+	resizeWindow("Altered Image", 512, 512);
+	moveWindow("Altered Image", 565, 50);
+	imshow("Altered Image", stego);
+
+	showHistogram(stego, "Post-Steganography Histogram");
+	moveWindow("Post-Steganography Histogram", 565, 595);
+}
+
 int main(int argc, char** argv)
 {
-	auto img = cvLoadImage("lena.jpg", CV_LOAD_IMAGE_GRAYSCALE);
-	cvNamedWindow("Image", NULL);
-	cvResizeWindow("Image", 512, 512);
-	//cvShowImage("Image", img);
-	//showHistogram(img, "Pre-Steganography Histogram");
+	test_dct();
 
-	//encode_lsb_alt(img, read_file("test.txt"));
-	//cout << decode_lsb_alt(img);
-
-	auto img2 = encode_dct(img, "arvizturo tukorfurogep arvizturo tukorfurogep arvizturo tukorfurogep arvizturo tukorfurogep arvizturo tukorfurogep");
-	cout << decode_dct(img2);
-
-	//showHistogram(img, "Post-Steganography Histogram");
-
-	cvShowImage("Image", img);
 	cvWaitKey();
 
 	//system("pause");
