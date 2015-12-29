@@ -18,11 +18,15 @@ Uses [DCT](http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html
 
 This method can survive an 80% JPEG compression while keeping the data completely intact and without introducing any significant visual degradation to the image during the hiding process. Better survival rates can be achieved, by using multiple channels and a bigger persistence value, however visual degradation may start appearing depending on the image being used.
 
+Further information regarding this method is available in [Lin, Yih-Kai. "A data hiding scheme based upon DCT coefficient modification." _Computer Standards & Interfaces_ 36.5 (2014): 855-862.](http://ms12.voip.edu.tw/~paul/Papper/Steganography/DCT/A_data_hiding_scheme_based_upon_DCT_coefficient_modification.pdf)
+
 ### Discrete Wavelet Transformation
 
 Uses discrete wavelet transformation (specifically [Haar](https://en.wikipedia.org/wiki/Haar_wavelet)) to hide data in the diagonal filter of a channel within an image.
 
 This method can also survive in lossy formats, but its efficiency is as not as good as DCT's, therefore this should mainly be used for watermarking purposes. A 90% JPEG compression will not degrade the data at all, however lower compression values require a bigger persistance during the hiding process, which starts to visibly deteriorate the image.
+
+Further information regarding this method is available in [Kumar, Sushil, and S. K. Muttoo. "Data Hiding Techniques Based on Wavelet-like Transform and Complex Wavelet Transforms." _2010 International Symposium on Intelligence Information Processing and Trusted Computing_. IEEE, 2010.](https://www.academia.edu/3632247/Data_Hiding_techniques_Based_On_Wavelet-like_transform_and_Complex_Wavelet_Transforms)
 
 ## Utilities
 
