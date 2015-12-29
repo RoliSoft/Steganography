@@ -15,34 +15,6 @@ using namespace std;
 using namespace boost;
 
 /*!
- * Returns the similarity between the original message and extracted message.
- *
- * \param original Original data.
- * \param extracted Extracted data.
- *
- * \return Similarity in percentages.
- */
-float similarity(const string& original, const string& extracted)
-{
-	auto hits = 0;
-
-	for (int i = 0; i < min(original.length(), extracted.length()); i++)
-	{
-		if (original[i] == extracted[i])
-		{
-			hits++;
-		}
-	}
-
-	return float(hits) / original.length() * 100;
-}
-
-void repair()
-{
-	
-}
-
-/*!
  * Evaluates the similarity and prints the original and resulting strings.
  *
  * \param input Original input.
@@ -186,8 +158,8 @@ int main(int argc, char** argv)
 
 	//test_lsb();
 	//test_lsb_alt();
-	test_dct();
-	//test_dwt();
+	//test_dct();
+	test_dwt();
 
 	cvWaitKey();
 

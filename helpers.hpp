@@ -2,8 +2,69 @@
 #include <fstream>
 #include <functional>
 #include <algorithm>
+#include <unordered_map>
 #include <boost/algorithm/string.hpp>
 #include <opencv2/core/core.hpp>
+
+/*!
+ * Returns the similarity between the original message and extracted message.
+ *
+ * \param original Original data.
+ * \param extracted Extracted data.
+ *
+ * \return Similarity in percentages.
+ */
+float similarity(const std::string& original, const std::string& extracted)
+{
+	auto hits = 0;
+
+	for (int i = 0; i < min(original.length(), extracted.length()); i++)
+	{
+		if (original[i] == extracted[i])
+		{
+			hits++;
+		}
+	}
+
+	return float(hits) / original.length() * 100;
+}
+
+/*!
+ * Tries to recover the original string by comparing multiple extracted data
+ * from multiple channels or methods.
+ *
+ * \param texts List of the same string extracted from different channels/methods.
+ *
+ * \return Recovered string.
+ */
+std::string repair(const std::vector<std::string>& texts)
+{
+	using namespace std;
+
+	auto longest = max_element(texts.begin(), texts.end(), [](auto a, auto b) { return a.size() < b.size(); })->size();
+	string result(longest, 0);
+
+	for (int i = 0; i < longest; i++)
+	{
+		unordered_map<char, uchar> freq;
+
+		for (int j = 0; j < texts.size(); j++)
+		{
+			if (texts[j].size() <= i)
+			{
+				continue;
+			}
+
+			freq[texts[j][i]]++;
+		}
+
+		auto frequent = max_element(freq.begin(), freq.end(), [](auto a, auto b) { return a.second < b.second; })->first;
+
+		result[i] = frequent;
+	}
+
+	return result;
+}
 
 /*!
  * Reads the specified file into a string.
