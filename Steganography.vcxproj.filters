@@ -29,5 +29,11 @@
     <ClInclude Include="lsb.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="lsb_alt.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dwt.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

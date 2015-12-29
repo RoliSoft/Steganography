@@ -162,8 +162,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dct.hpp" />
+    <ClInclude Include="dwt.hpp" />
     <ClInclude Include="helpers.hpp" />
     <ClInclude Include="lsb.hpp" />
+    <ClInclude Include="lsb_alt.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

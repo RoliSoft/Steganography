@@ -68,9 +68,9 @@ inline void showHistogram(const cv::Mat& mat, const char* title = "Histogram")
 
 	for (int i = 1; i < size; i++)
 	{
-		line(histImage, Point(bin_w*(i - 1), hist_h - b_hist.at<float>(i - 1)), Point(bin_w*(i), hist_h - b_hist.at<float>(i)), Scalar(255, 0, 0), 1, 8, 0);
-		line(histImage, Point(bin_w*(i - 1), hist_h - g_hist.at<float>(i - 1)), Point(bin_w*(i), hist_h - g_hist.at<float>(i)), Scalar(0, 255, 0), 1, 8, 0);
-		line(histImage, Point(bin_w*(i - 1), hist_h - r_hist.at<float>(i - 1)), Point(bin_w*(i), hist_h - r_hist.at<float>(i)), Scalar(0, 0, 255), 1, 8, 0);
+		line(histImage, Point(bin_w*(i - 1), hist_h - b_hist.at<float>(i - 1)), Point(bin_w*i, hist_h - b_hist.at<float>(i)), Scalar(255, 0, 0), 1, 8, 0);
+		line(histImage, Point(bin_w*(i - 1), hist_h - g_hist.at<float>(i - 1)), Point(bin_w*i, hist_h - g_hist.at<float>(i)), Scalar(0, 255, 0), 1, 8, 0);
+		line(histImage, Point(bin_w*(i - 1), hist_h - r_hist.at<float>(i - 1)), Point(bin_w*i, hist_h - r_hist.at<float>(i)), Scalar(0, 0, 255), 1, 8, 0);
 	}
 
 	namedWindow(title, CV_WINDOW_AUTOSIZE);
