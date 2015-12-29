@@ -4,84 +4,69 @@
 #include <opencv2/highgui.hpp>
 #include <tuple>
 
-inline std::tuple<std::vector<std::vector<float>>, std::vector<std::vector<float>>, std::vector<std::vector<float>>> cvHaarWavelet(cv::Mat &src, cv::Mat &dst)
+inline std::tuple<std::vector<std::vector<float>>, std::vector<std::vector<float>>, std::vector<std::vector<float>>> cvHaarWavelet(const cv::Mat& src, cv::Mat& dst)
 {
 	using namespace cv;
 	using namespace std;
 
-	float c, dh, dv, dd;
-	assert(src.type() == CV_32FC1);
-	assert(dst.type() == CV_32FC1);
-	int width = src.cols;
-	int height = src.rows;
+	auto width  = src.cols / 2;
+	auto height = src.rows / 2;
 
-	vector<vector<float>> dhs(height >> 1);
-	vector<vector<float>> dvs(height >> 1);
-	vector<vector<float>> dds(height >> 1);
+	vector<vector<float>> dhs(height);
+	vector<vector<float>> dvs(height);
+	vector<vector<float>> dds(height);
 
-	for (int y = 0;y<(height >> 1);y++)
+	for (int y = 0; y < height; y++)
 	{
-		dhs[y] = vector<float>(width >> 1);
-		dvs[y] = vector<float>(width >> 1);
-		dds[y] = vector<float>(width >> 1);
+		dhs[y] = vector<float>(width);
+		dvs[y] = vector<float>(width);
+		dds[y] = vector<float>(width);
 
-		for (int x = 0; x<(width >> 1);x++)
+		for (int x = 0; x<(width);x++)
 		{
-			c = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y, 2 * x + 1) + src.at<float>(2 * y + 1, 2 * x) + src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
-			dst.at<float>(y, x) = c;
+			auto c  = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y, 2 * x + 1) + src.at<float>(2 * y + 1, 2 * x) + src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
+			auto dh = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y + 1, 2 * x) - src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
+			auto dv = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x) - src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
+			auto dd = (src.at<float>(2 * y, 2 * x) - src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x) + src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
 
-			dh = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y + 1, 2 * x) - src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
-			dst.at<float>(y, x + (width >> 1)) = dh;
+			dst.at<float>(y,          x)         = c;
+			dst.at<float>(y,          x + width) = dh;
+			dst.at<float>(y + height, x)         = dv;
+			dst.at<float>(y + height, x + width) = dd;
 
 			dhs[y][x] = dh;
-
-			dv = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x) - src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
-			dst.at<float>(y + (height >> 1), x) = dv;
-
 			dvs[y][x] = dv;
-
-			dd = (src.at<float>(2 * y, 2 * x) - src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x) + src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
-			dst.at<float>(y + (height >> 1), x + (width >> 1)) = dd;
-
 			dds[y][x] = dd;
 		}
 	}
-	dst.copyTo(src);
 
 	return make_tuple(dhs, dvs, dds);
 }
 
-inline void cvInvHaarWavelet(cv::Mat &src, cv::Mat &dst, std::vector<std::vector<float>>& dhs, std::vector<std::vector<float>>& dvs, std::vector<std::vector<float>>& dds)
+inline void cvInvHaarWavelet(const cv::Mat& src, cv::Mat& dst, const std::vector<std::vector<float>>& dhs, const std::vector<std::vector<float>>& dvs, const std::vector<std::vector<float>>& dds)
 {
 	using namespace cv;
 	using namespace std;
 
-	float c, dh, dv, dd;
-	assert(src.type() == CV_32FC1);
-	assert(dst.type() == CV_32FC1);
-	int width = src.cols;
-	int height = src.rows;
+	auto width  = src.cols / 2;
+	auto height = src.rows / 2;
 
-	for (int y = 0;y<(height >> 1);y++)
+	for (int y = 0; y < height; y++)
 	{
-		for (int x = 0; x<(width >> 1);x++)
+		for (int x = 0; x < width; x++)
 		{
-			c = src.at<float>(y, x);
+			auto dh = dhs[y][x];
+			auto dv = dvs[y][x];
+			auto dd = dds[y][x];
 
-			dh = dhs[y][x];
-			dv = dvs[y][x];
-			dd = dds[y][x];
+			auto c = src.at<float>(y, x);
 
-			dst.at<float>(y * 2, x * 2) = 0.5*(c + dh + dv + dd);
-			dst.at<float>(y * 2, x * 2 + 1) = 0.5*(c - dh + dv - dd);
-			dst.at<float>(y * 2 + 1, x * 2) = 0.5*(c + dh - dv - dd);
+			dst.at<float>(y * 2,     x * 2)     = 0.5*(c + dh + dv + dd);
+			dst.at<float>(y * 2,     x * 2 + 1) = 0.5*(c - dh + dv - dd);
+			dst.at<float>(y * 2 + 1, x * 2)     = 0.5*(c + dh - dv - dd);
 			dst.at<float>(y * 2 + 1, x * 2 + 1) = 0.5*(c - dh - dv + dd);
 		}
 	}
-
-	Mat C = src(Rect(0, 0, width >> (1 - 1), height >> (1 - 1)));
-	Mat D = dst(Rect(0, 0, width >> (1 - 1), height >> (1 - 1)));
-	D.copyTo(C);
 }
 
 inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alpha = 0.05)
@@ -93,7 +78,7 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 	auto size = text.length() * 8;
 
 	Mat imgfp;
-	img.convertTo(imgfp, CV_32FC1, 1.0 / 255); // 1.0/255
+	img.convertTo(imgfp, CV_32FC1, 1.0 / 255);
 
 	for (int y = 0;y < imgfp.cols;y++)
 	{
@@ -151,11 +136,14 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 	Dst.copyTo(Temp);
 	cvInvHaarWavelet(Temp, Filtered, get<0>(params), get<1>(params), dds);
 
-	//imshow("Image Haar", Dst);
-	imshow("Image Inv", Filtered);
+	/*imshow("Image Haar", Dst);
+	imshow("Image Inv", Filtered);*/
 
-	/*vector<Mat> planes;
-	split(carf, planes);*/
+	/*Mat mergedfp;
+	merge(planes, mergedfp);
+
+	Mat merged;
+	mergedfp.convertTo(merged, CV_8U);*/
 
 	return Filtered;
 }
@@ -166,7 +154,7 @@ std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
 	using namespace std;
 
 	auto i = 0;
-	string bits((img.cols >> 1) * (img.rows >> 1) / 8, 0);
+	string bits((img.cols / 2) * (img.rows  / 2) / 8, 0);
 
 	Mat imgfp;
 	img.convertTo(imgfp, CV_32FC1, 1.0 / 255);
