@@ -1,7 +1,7 @@
+#include <iostream>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <iostream>
 #include "helpers.hpp"
 #include "lsb.hpp"
 #include "lsb_alt.hpp"
@@ -10,6 +10,7 @@
 
 using namespace cv;
 using namespace std;
+using namespace boost;
 
 void test_lsb()
 {
@@ -26,6 +27,8 @@ void test_lsb()
 	auto input  = read_file("test.txt");
 	auto stego  = encode_lsb(img, input);
 	auto output = decode_lsb(stego);
+
+	clean(output);
 
 	cout << endl << "   Input:" << endl << endl << input << endl << endl << "   Extracted:" << endl << endl << output << endl;
 
@@ -54,6 +57,8 @@ void test_lsb_alt()
 	auto stego  = encode_lsb_alt(img, input);
 	auto output = decode_lsb_alt(stego);
 
+	clean(output);
+
 	cout << endl << "   Input:" << endl << endl << input << endl << endl << "   Extracted:" << endl << endl << output << endl;
 
 	namedWindow("Altered Image", NULL);
@@ -80,6 +85,8 @@ void test_dct()
 	auto input  = read_file("test.txt");
 	auto stego  = encode_dct(img, input);
 	auto output = decode_dct(stego);
+
+	clean(output);
 
 	cout << endl << "   Input:" << endl << endl << input << endl << endl << "   Extracted:" << endl << endl << output << endl;
 
@@ -108,6 +115,8 @@ void test_dwt()
 	auto stego  = encode_dwt(img, input);
 	auto output = decode_dwt(img, stego);
 
+	clean(output);
+
 	cout << endl << "   Input:" << endl << endl << input << endl << endl << "   Extracted:" << endl << endl << output << endl;
 
 	namedWindow("Altered Image", NULL);
@@ -115,8 +124,8 @@ void test_dwt()
 	moveWindow("Altered Image", 565, 50);
 	imshow("Altered Image", stego);
 
-	/*showHistogram(stego, "Post-Steganography Histogram");
-	moveWindow("Post-Steganography Histogram", 565, 595);*/
+	showHistogram(stego, "Post-Steganography Histogram");
+	moveWindow("Post-Steganography Histogram", 565, 595);
 }
 
 int main(int argc, char** argv)

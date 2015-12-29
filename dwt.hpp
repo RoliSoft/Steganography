@@ -4,6 +4,14 @@
 #include <opencv2/highgui.hpp>
 #include <tuple>
 
+/*!
+ * Performs Haar wavelet decomposition.
+ *
+ * \param src Source image.
+ * \param dst Destination image for the decomposition.
+ *
+ * \return Tuple with the horizontal, vertical and diagonal coefficients.
+ */
 inline std::tuple<std::vector<std::vector<float>>, std::vector<std::vector<float>>, std::vector<std::vector<float>>> cvHaarWavelet(const cv::Mat& src, cv::Mat& dst)
 {
 	using namespace cv;
@@ -24,10 +32,10 @@ inline std::tuple<std::vector<std::vector<float>>, std::vector<std::vector<float
 
 		for (int x = 0; x<(width);x++)
 		{
-			auto c  = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y, 2 * x + 1) + src.at<float>(2 * y + 1, 2 * x) + src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
-			auto dh = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y + 1, 2 * x) - src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
-			auto dv = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x) - src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
-			auto dd = (src.at<float>(2 * y, 2 * x) - src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x) + src.at<float>(2 * y + 1, 2 * x + 1))*0.5;
+			auto c  = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y, 2 * x + 1) + src.at<float>(2 * y + 1, 2 * x) + src.at<float>(2 * y + 1, 2 * x + 1)) * 0.5;
+			auto dh = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y + 1, 2 * x) - src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x + 1)) * 0.5;
+			auto dv = (src.at<float>(2 * y, 2 * x) + src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x) - src.at<float>(2 * y + 1, 2 * x + 1)) * 0.5;
+			auto dd = (src.at<float>(2 * y, 2 * x) - src.at<float>(2 * y, 2 * x + 1) - src.at<float>(2 * y + 1, 2 * x) + src.at<float>(2 * y + 1, 2 * x + 1)) * 0.5;
 
 			dst.at<float>(y,          x)         = c;
 			dst.at<float>(y,          x + width) = dh;
@@ -43,6 +51,15 @@ inline std::tuple<std::vector<std::vector<float>>, std::vector<std::vector<float
 	return make_tuple(dhs, dvs, dds);
 }
 
+/*!
+ * Performs Haar wavelet reconstruction.
+ *
+ * \param src Source image.
+ * \param dst Destination image for the reconstruction.
+ * \param dhs Horizontal coefficients.
+ * \param dvs Vertical coefficients.
+ * \param dds Diagonal coefficients.
+ */
 inline void cvInvHaarWavelet(const cv::Mat& src, cv::Mat& dst, const std::vector<std::vector<float>>& dhs, const std::vector<std::vector<float>>& dvs, const std::vector<std::vector<float>>& dds)
 {
 	using namespace cv;
@@ -69,6 +86,15 @@ inline void cvInvHaarWavelet(const cv::Mat& src, cv::Mat& dst, const std::vector
 	}
 }
 
+/*!
+ * Uses discrete wavelet transformation to hide data in the diagonal filter of the first plane of an image.
+ *
+ * \param img Input image.
+ * \param text Text to hide.
+ * \param alpha Encoding intensity.
+ *
+ * \return Altered image with hidden data.
+ */
 inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alpha = 0.05)
 {
 	using namespace cv;
@@ -83,13 +109,11 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 	vector<Mat> planes;
 	split(imgfp, planes);
 
-	Mat plane = planes[0];
-
-	for (int y = 0;y < plane.cols; y++)
+	for (int y = 0;y < img.cols; y++)
 	{
-		for (int x = 0; x < plane.cols; x++)
+		for (int x = 0; x < img.cols; x++)
 		{
-			auto val = plane.at<float>(y, x);
+			auto val = planes[0].at<float>(y, x);
 
 			if (val < alpha)
 			{
@@ -100,16 +124,14 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 				val = 1 - alpha;
 			}
 
-			plane.at<float>(y, x) = val;
+			planes[0].at<float>(y, x) = val;
 		}
 	}
 
-	Mat Dst = Mat(plane.rows, plane.cols, CV_32FC1);
-	Mat Temp = Mat(plane.rows, plane.cols, CV_32FC1);
-	Mat Filtered = Mat(plane.rows, plane.cols, CV_32FC1);
+	Mat haar(img.rows, img.cols, CV_32FC1);
 
-	auto params = cvHaarWavelet(plane, Dst);
-	auto dds = get<2>(params);
+	auto hwv = cvHaarWavelet(planes[0], haar);
+	auto dds = get<2>(hwv);
 
 	for (int y = 0; y < dds.size(); y++)
 	{
@@ -133,26 +155,26 @@ inline cv::Mat encode_dwt(const cv::Mat& img, const std::string& text, float alp
 		}
 	}
 
-	Dst.copyTo(Temp);
-
-	cvInvHaarWavelet(Temp, Filtered, get<0>(params), get<1>(params), dds);
-
-	/*imshow("Image Haar", Dst);
-	imshow("Image Inv", Filtered);*/
-
-	Filtered.copyTo(planes[0]);
+	cvInvHaarWavelet(haar, planes[0], get<0>(hwv), get<1>(hwv), dds);
 
 	Mat mergedfp;
 	merge(planes, mergedfp);
 
-	/*Mat merged;
-	mergedfp.convertTo(merged, CV_8U);*/
+	Mat merged;
+	mergedfp.convertTo(merged, CV_8U, 255);
 
-	//imshow("Image Res", mergedfp);
-	return mergedfp;
+	return merged;
 }
 
-std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
+/*!
+ * Uses discrete wavelet transformation to recover data hidden in the diagonal filter of an image.
+ *
+ * \param img Original image without hidden data.
+ * \param stego Altered image with hidden data.
+ *
+ * \return Hidden data extracted form image.
+ */
+inline std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
 {
 	using namespace cv;
 	using namespace std;
@@ -164,7 +186,7 @@ std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
 	img.convertTo(imgfp, CV_32FC1, 1.0 / 255);
 
 	Mat stegofp;
-	stego.convertTo(stegofp, CV_32FC1);
+	stego.convertTo(stegofp, CV_32FC1, 1.0 / 255);
 
 	vector<Mat> planes1;
 	split(imgfp, planes1);
@@ -172,20 +194,17 @@ std::string decode_dwt(const cv::Mat& img, const cv::Mat& stego)
 	vector<Mat> planes2;
 	split(stegofp, planes2);
 
-	Mat plane1 = planes1[0];
-	Mat plane2 = planes2[0];
+	Mat haar1(img.rows, img.cols, CV_32FC1);
+	Mat haar2(img.rows, img.cols, CV_32FC1);
 
-	Mat Dst1 = Mat(img.rows, img.cols, CV_32FC1);
-	Mat Dst2 = Mat(img.rows, img.cols, CV_32FC1);
+	auto dds1 = get<2>(cvHaarWavelet(planes1[0], haar1));
+	auto dds2 = get<2>(cvHaarWavelet(planes2[0], haar2));
 
-	auto ddo = get<2>(cvHaarWavelet(plane1, Dst1));
-	auto dds = get<2>(cvHaarWavelet(plane2, Dst2));
-
-	for (int y = 0; y < ddo.size(); y++)
+	for (int y = 0; y < dds1.size(); y++)
 	{
-		for (int x = 0; x < ddo[y].size(); x++)
+		for (int x = 0; x < dds1[y].size(); x++)
 		{
-			auto val = dds[y][x] - ddo[y][x];
+			auto val = dds2[y][x] - dds1[y][x];
 
 			if (val > 0)
 			{

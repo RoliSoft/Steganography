@@ -1,9 +1,9 @@
 #pragma once
-#include <opencv2/core/core.hpp>
-#include <omp.h>
 #include <fstream>
 #include <functional>
 #include <algorithm>
+#include <boost/algorithm/string.hpp>
+#include <opencv2/core/core.hpp>
 
 /*!
  * Reads the specified file into a string.
@@ -18,6 +18,21 @@ inline std::string read_file(std::string file)
 	std::string text((std::istreambuf_iterator<char>(fs)), std::istreambuf_iterator<char>());
 	fs.close();
 	return text;
+}
+
+/*!
+ * Removes non-printable characters from the input and trims any leading or trailing whitespace.
+ *
+ * \param text Text to be cleaned.
+ */
+inline void clean(std::string& text)
+{
+	text.erase(remove_if(text.begin(), text.end(), [](char c)
+		{
+			static auto l = boost::is_print(std::locale());
+			return !l(c) && c != '\r' && c != '\n';
+		}), text.end());
+	boost::trim(text);
 }
 
 /*!
