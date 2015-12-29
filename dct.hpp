@@ -41,8 +41,8 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int inten
 
 			dct(block, trans);
 
-			auto a = trans.at<long float>(2, 1);
-			auto b = trans.at<long float>(2, 2);
+			auto a = trans.at<long float>(6, 7);
+			auto b = trans.at<long float>(5, 1);
 			
 			auto val = 0;
 			if (i <= size)
@@ -79,8 +79,8 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int inten
 				     b = b + d;
 			}
 
-			trans.at<long float>(2, 1) = a;
-			trans.at<long float>(2, 2) = b;
+			trans.at<long float>(6, 7) = a;
+			trans.at<long float>(5, 1) = b;
 
 			Mat stego(Size(block_width, block_height), block.type());
 
@@ -137,8 +137,8 @@ inline std::string decode_dct(const cv::Mat& img)
 
 			dct(block, trans);
 
-			auto a = trans.at<long float>(2, 1);
-			auto b = trans.at<long float>(2, 2);
+			auto a = trans.at<long float>(6, 7);
+			auto b = trans.at<long float>(5, 1);
 
 			if (a > b)
 			{

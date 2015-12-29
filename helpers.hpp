@@ -1,12 +1,17 @@
 #pragma once
 #include <opencv2/core/core.hpp>
 #include <omp.h>
+#include <fstream>
 #include <functional>
 #include <algorithm>
-#include <tuple>
 
-#define data(im,x,y,c) im->imageData[i*im->widthStep+j*im->depth/8*im->nChannels+c]
-
+/*!
+ * Reads the specified file into a string.
+ *
+ * \param file Path to the file.
+ *
+ * \return Contents of the file.
+ */
 inline std::string read_file(std::string file)
 {
 	std::ifstream fs(file);
@@ -15,62 +20,24 @@ inline std::string read_file(std::string file)
 	return text;
 }
 
+/*!
+ * Converts a cv::Mat object instance into an IplImage instance pointer.
+ *
+ * \param img Image in new format.
+ *
+ * \return Image in old format.
+ */
 inline IplImage* cvmatToArr(const cv::Mat& img)
 {
 	return new IplImage(img);
 }
 
-inline void loopPixels(IplImage* im, std::function<void(unsigned char)> op, bool parallel = true)
-{
-	#pragma omp parallel for if (parallel)
-	for (int i = 0; i < im->height; i++)
-	{
-		for (int j = 0; j < im->width; j++)
-		{
-			op(data(im, j, i, 0));
-		}
-	}
-}
-
-inline void loopPixelsApply(IplImage* im, std::function<unsigned char(unsigned char)> op, bool parallel = true)
-{
-	#pragma omp parallel for if (parallel)
-	for (int i = 0; i < im->height; i++)
-	{
-		for (int j = 0; j < im->width; j++)
-		{
-			data(im, j, i, 0) = op(data(im, j, i, 0));
-		}
-	}
-}
-
-inline void loopPixelsRgb(IplImage* im, std::function<void(unsigned char, unsigned char, unsigned char)> op, bool parallel = true)
-{
-	#pragma omp parallel for if (parallel)
-	for (int i = 0; i < im->height; i++)
-	{
-		for (int j = 0; j < im->width; j++)
-		{
-			op(data(im, j, i, 0), data(im, j, i, 1), data(im, j, i, 2));
-		}
-	}
-}
-
-inline void loopPixelsRgbApply(IplImage* im, std::function<std::tuple<unsigned char, unsigned char, unsigned char>(unsigned char, unsigned char, unsigned char)> op, bool parallel = true)
-{
-	#pragma omp parallel for if (parallel)
-	for (int i = 0; i < im->height; i++)
-	{
-		for (int j = 0; j < im->width; j++)
-		{
-			auto rgb = op(data(im, j, i, 0), data(im, j, i, 1), data(im, j, i, 2));
-			data(im, j, i, 0) = std::get<0>(rgb);
-			data(im, j, i, 1) = std::get<1>(rgb);
-			data(im, j, i, 2) = std::get<2>(rgb);
-		}
-	}
-}
-
+/*!
+ * Displays the histogram of the specified image.
+ *
+ * \param mat Input image.
+ * \param title Name of the window.
+ */
 inline void showHistogram(const cv::Mat& mat, const char* title = "Histogram")
 {
 	using namespace cv;

@@ -2,8 +2,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
-#include <fstream>
 #include "helpers.hpp"
+#include "lsb.hpp"
 #include "dct.hpp"
 
 using namespace cv;
@@ -161,141 +161,6 @@ static void cvInvHaarWavelet(Mat &src, Mat &dst, int NIter, int SHRINKAGE_TYPE =
 	}
 }
 
-void encode_lsb(IplImage* img, string text)
-{
-	int size = text.length();
-	int xize = ~size;
-
-	text = string(reinterpret_cast<char*>(&size), sizeof(int)) + string(reinterpret_cast<char*>(&xize), sizeof(int)) + text;
-
-	int b = 0;
-	int bits = text.length() * 8 + 7;
-
-	for (int i = 0; i < img->height; i++)
-	{
-		for (int j = 0; j < img->width; j++)
-		{
-			for (int k = 0; k < img->nChannels; k++)
-			{
-				auto val = data(img, j, i, k);
-
-				val &= 254;
-				val |= (text[b / 8] & 1 << b % 8) >> b % 8;
-
-				data(img, j, i, k) = val;
-
-				if (b++ >= bits)
-				{
-					break;
-				}
-			}
-
-			if (b >= bits)
-			{
-				break;
-			}
-		}
-
-		if (b >= bits)
-		{
-			break;
-		}
-	}
-}
-
-string decode_lsb(IplImage* img)
-{
-	int b = 0;
-	string text(img->height * img->width * img->nChannels / 8, 0);
-
-	for (int i = 0; i < img->height; i++)
-	{
-		for (int j = 0; j < img->width; j++)
-		{
-			for (int k = 0; k < img->nChannels; k++)
-			{
-				auto val = data(img, j, i, k);
-
-				text[b / 8] |= (val & 1) << b % 8;
-
-				b++;
-			}
-		}
-	}
-
-	int size = *reinterpret_cast<const int*>(text.c_str());
-	int xize = *reinterpret_cast<const int*>(text.c_str() + sizeof(int));
-
-	if (xize != ~size)
-	{
-		return "";
-	}
-
-	return text.substr(sizeof(int) * 2, size);
-}
-
-void encode_lsb_alt(IplImage* img, string text)
-{
-	int size = text.length();
-	int xize = ~size;
-
-	text = string(reinterpret_cast<char*>(&size), sizeof(int)) + string(reinterpret_cast<char*>(&xize), sizeof(int)) + text;
-
-	int b = 0;
-	int bits = text.length() * 8;
-
-	for (int i = 0; i < img->height; i += 3)
-	{
-		for (int j = 0; j < img->width; j += 3)
-		{
-			auto val = data(img, j, i, b % img->nChannels);
-
-			val &= 254;
-			val |= (text[b / 8] & 1 << b % 8) >> b % 8;
-
-			data(img, j, i, b % img->nChannels) = val;
-
-			if (b++ >= bits)
-			{
-				b = 0;
-			}
-		}
-
-		if (b >= bits)
-		{
-			break;
-		}
-	}
-}
-
-string decode_lsb_alt(IplImage* img)
-{
-	int b = 0;
-	string text((img->height / 3) * (img->width / 3) * (img->nChannels / 3) / 8, 0);
-
-	for (int i = 0; i < img->height; i += 3)
-	{
-		for (int j = 0; j < img->width; j += 3)
-		{
-			auto val = data(img, j, i, b % img->nChannels);
-
-			text[b / 8] |= (val & 1) << b % 8;
-
-			b++;
-		}
-	}
-
-	int size = *reinterpret_cast<const int*>(text.c_str());
-	int xize = *reinterpret_cast<const int*>(text.c_str() + sizeof(int));
-
-	if (xize != ~size)
-	{
-		return "";
-	}
-
-	return text.substr(sizeof(int) * 2, size);
-}
-
 void encode_dwt(IplImage* img, string secret_bin, float alpha = 0.05)
 {
 	int secret_msg_bin_len = secret_bin.length();
@@ -329,6 +194,33 @@ void encode_dwt(IplImage* img, string secret_bin, float alpha = 0.05)
 	split(carf, planes);*/
 }
 
+void test_lsb()
+{
+	auto img = imread("img_small.png");
+
+	namedWindow("Image", NULL);
+	resizeWindow("Image", 512, 512);
+	moveWindow("Image", 50, 50);
+	imshow("Image", img);
+
+	showHistogram(img, "Pre-Steganography Histogram");
+	moveWindow("Pre-Steganography Histogram", 50, 595);
+
+	auto input  = read_file("test.txt");
+	auto stego  = encode_lsb(img, input);
+	auto output = decode_lsb(stego);
+
+	cout << endl << "   Input:" << endl << endl << input << endl << endl << "   Extracted:" << endl << endl << output << endl;
+
+	namedWindow("Altered Image", NULL);
+	resizeWindow("Altered Image", 512, 512);
+	moveWindow("Altered Image", 565, 50);
+	imshow("Altered Image", stego);
+
+	showHistogram(stego, "Post-Steganography Histogram");
+	moveWindow("Post-Steganography Histogram", 565, 595);
+}
+
 void test_dct()
 {
 	auto img = imread("lena.jpg");
@@ -358,7 +250,8 @@ void test_dct()
 
 int main(int argc, char** argv)
 {
-	test_dct();
+	test_lsb();
+	//test_dct();
 
 	cvWaitKey();
 
