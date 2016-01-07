@@ -643,6 +643,101 @@ void read_dct(const string& altered, int channel)
 }
 
 /*!
+ * Runs the discrete cosine transformation method on video.
+ *
+ * \param input Path to original video.
+ * \param secret Path to the data to be hidden.
+ * \param store Storage mode.
+ * \param channel Channels to encode.
+ * \param persistence Persistence value.
+ */
+void do_dct_vid(const string& input, const string& secret, int store, int channel, int persistence)
+{
+	VideoCapture cap(input);
+
+	if (!cap.isOpened())
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open input video from '" << input << "'." << endl << endl;
+		return;
+	}
+
+	auto altered = remove_extension(input) + ".dct.mp4";
+
+	VideoWriter wrt(altered, cap.get(CV_CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS), Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
+
+	if (!wrt.isOpened())
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open output video for writing at '" << altered << "'." << endl << endl;
+		return;
+	}
+
+	wrt.set(VIDEOWRITER_PROP_QUALITY, 100);
+
+	auto data = read_file(secret);
+
+	while (cap.grab())
+	{
+		Mat frame;
+		cap.retrieve(frame);
+
+		if (channel == 0)
+		{
+			frame = encode_dct(frame, data, store, 0, persistence);
+			frame = encode_dct(frame, data, store, 1, persistence);
+			frame = encode_dct(frame, data, store, 2, persistence);
+		}
+		else
+		{
+			frame = encode_dct(frame, data, store, channel - 1, persistence);
+		}
+
+		wrt.write(frame);
+	}
+
+	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered video written to '" << altered << "'." << endl;
+}
+
+/*!
+ * Runs the discrete cosine transformation extraction method on video.
+ *
+ * \param altered Path to the altered video.
+ * \param channel Channels to decode.
+ */
+void read_dct_vid(const string& altered, int channel)
+{
+	VideoCapture cap(altered);
+
+	if (!cap.isOpened())
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open altered video from '" << altered << "'." << endl << endl;
+		return;
+	}
+
+	vector<string> strings;
+
+	while (cap.grab())
+	{
+		Mat frame;
+		cap.retrieve(frame);
+
+		if (channel == 0)
+		{
+			strings.push_back(decode_dct(frame, 0));
+			strings.push_back(decode_dct(frame, 1));
+			strings.push_back(decode_dct(frame, 2));
+		}
+		else
+		{
+			strings.push_back(decode_dct(frame, channel - 1));
+		}
+	}
+
+	auto output = clean(repair(strings));
+
+	cout << endl << "  Extracted:" << endl << endl << Format::White << Format::Bold << output << Format::Normal << Format::Default << endl << endl;
+}
+
+/*!
  * Runs the discrete wavelet transformation method.
  *
  * \param input Path to original image.
@@ -966,7 +1061,58 @@ main:
 	break;
 
 	case 'v':
-		break;
+	{
+		string input  = "test/test.mp4";
+		string secret = "test/test.txt";
+		auto store = STORE_FULL, channel = 0, persistence = 50;
+
+	mnvid:
+		switch (show_menu("DCT Configuration", {
+			{ 'i', "Input File:    " + input },
+			{ 'd', "Data File:     " + secret },
+			{ 's', "Storage Mode:  " + store_to_string(store) },
+			{ 'c', "Channel Usage: " + channel_to_string(channel) },
+			{ 'p', "Persistence:   " + to_string(persistence) + "%" },
+			{ 'a', "Perform Steganography" },
+			{ 'x', "Perform Extraction" },
+			{ 'b', "Back to Main Menu" }
+		}, "ax"))
+		{
+		case 'i':
+			prompt_string("Input File", input, true);
+			goto mnvid;
+
+		case 'd':
+			prompt_string("Data File", secret, true);
+			goto mnvid;
+
+		case 's':
+			select_store(store);
+			goto mnvid;
+
+		case 'c':
+			select_channel(channel);
+			goto mnvid;
+
+		case 'p':
+			prompt_int("Persistence Percentage", persistence, 0, 100);
+			goto mnvid;
+
+		case 'a':
+			do_dct_vid(input, secret, store, channel, persistence);
+			cvWaitKey();
+			break;
+
+		case 'x':
+			read_dct_vid(input, channel);
+			system("pause");
+			break;
+
+		case 'b':
+			goto main;
+		}
+	}
+	break;
 
 	case 't':
 	{
