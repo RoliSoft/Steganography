@@ -462,6 +462,12 @@ void do_lsb(const string& input, const string& secret, int store, int channel)
 {
 	auto img = imread(input);
 
+	if (!img.data)
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open input image from '" << input << "'." << endl << endl;
+		return;
+	}
+
 	show_image(img, "Original");
 
 	auto data = read_file(secret);
@@ -481,7 +487,7 @@ void do_lsb(const string& input, const string& secret, int store, int channel)
 
 	imwrite(altered, stego);
 
-	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered + "'." << endl;
+	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered << "'." << endl;
 
 	stego = imread(altered);
 
@@ -510,6 +516,12 @@ void do_lsb(const string& input, const string& secret, int store, int channel)
 void read_lsb(const string& altered, int channel)
 {
 	auto stego = imread(altered);
+
+	if (!stego.data)
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open altered image from '" << altered << "'." << endl << endl;
+		return;
+	}
 
 	string output;
 
@@ -541,6 +553,12 @@ void do_dct(const string& input, const string& secret, int store, int channel, i
 {
 	auto img = imread(input);
 
+	if (!img.data)
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open input image from '" << input << "'." << endl << endl;
+		return;
+	}
+
 	show_image(img, "Original");
 
 	auto data = read_file(secret);
@@ -562,7 +580,7 @@ void do_dct(const string& input, const string& secret, int store, int channel, i
 
 	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, compression });
 
-	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered + "'." << endl;
+	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered << "'." << endl;
 
 	stego = imread(altered);
 
@@ -597,6 +615,12 @@ void read_dct(const string& altered, int channel)
 {
 	auto stego = imread(altered);
 
+	if (!stego.data)
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open altered image from '" << altered << "'." << endl << endl;
+		return;
+	}
+
 	string output;
 
 	if (channel == 0)
@@ -628,9 +652,15 @@ void read_dct(const string& altered, int channel)
  * \param alpha Encoding intensity.
  * \param compression JPEG compression percentage.
  */
-void do_dwt(const string& input, const string& secret, int store, int channel, int alpha, int compression)
+void do_dwt(const string& input, const string& secret, int store, int channel, double alpha, int compression)
 {
 	auto img = imread(input);
+
+	if (!img.data)
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open input image from '" << input << "'." << endl << endl;
+		return;
+	}
 
 	show_image(img, "Original");
 
@@ -653,7 +683,7 @@ void do_dwt(const string& input, const string& secret, int store, int channel, i
 
 	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, compression });
 
-	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered + "'." << endl;
+	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered << "'." << endl;
 
 	stego = imread(altered);
 
@@ -689,6 +719,18 @@ void read_dwt(const string& input, const string& altered, int channel)
 {
 	auto img   = imread(input);
 	auto stego = imread(altered);
+
+	if (!img.data)
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open original image from '" << input << "'." << endl << endl;
+		return;
+	}
+
+	if (!stego.data)
+	{
+		cerr << endl << "  " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Failed to open altered image from '" << altered << "'." << endl << endl;
+		return;
+	}
 
 	string output;
 
@@ -753,7 +795,7 @@ main:
 		{
 			string input  = "test/img.png";
 			string secret = "test/test.txt";
-			auto store = 1, channel = 0;
+			auto store = STORE_ONCE, channel = 0;
 
 		mnlsb:
 			switch (show_menu("LSB Configuration", {
@@ -802,7 +844,7 @@ main:
 		{
 			string input  = "test/lena.jpg";
 			string secret = "test/test.txt";
-			auto store = 1, channel = 0, persistence = 30, compression = 80;
+			auto store = STORE_FULL, channel = 0, persistence = 30, compression = 80;
 
 		mndct:
 			switch (show_menu("DCT Configuration", {
@@ -861,7 +903,7 @@ main:
 		{
 			string input  = "test/lena.jpg";
 			string secret = "test/test.txt";
-			auto store = 1, channel = 0, compression = 90;
+			auto store = STORE_FULL, channel = 0, compression = 90;
 			auto alpha = 0.1;
 
 		mndwt:
@@ -907,7 +949,7 @@ main:
 				break;
 
 			case 'x':
-				read_dwt(secret, input, channel);
+				read_dwt(input, secret, channel);
 				system("pause");
 				break;
 
