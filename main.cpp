@@ -454,16 +454,17 @@ void prompt_double(const string& title, double& value, double min = DBL_MIN, dou
  * Runs the least significant bit method.
  *
  * \param input Path to original image.
+ * \param secret Path to the data to be hidden.
  * \param store Storage mode.
  * \param channel Channels to encode.
  */
-void do_lsb(const string& input, int store, int channel)
+void do_lsb(const string& input, const string& secret, int store, int channel)
 {
 	auto img = imread(input);
 
 	show_image(img, "Original");
 
-	auto data = read_file("test/test.txt");
+	auto data = read_file(secret);
 
 	Mat stego;
 
@@ -504,17 +505,19 @@ void do_lsb(const string& input, int store, int channel)
  * Runs the discrete cosine transformation method.
  *
  * \param input Path to original image.
+ * \param secret Path to the data to be hidden.
  * \param store Storage mode.
  * \param channel Channels to encode.
  * \param persistence Persistence value.
+ * \param compression JPEG compression percentage.
  */
-void do_dct(const string& input, int store, int channel, int persistence)
+void do_dct(const string& input, const string& secret, int store, int channel, int persistence, int compression)
 {
 	auto img = imread(input);
 
 	show_image(img, "Original");
 
-	auto data = read_file("test/test.txt");
+	auto data = read_file(secret);
 
 	Mat stego;
 
@@ -531,7 +534,7 @@ void do_dct(const string& input, int store, int channel, int persistence)
 
 	auto altered = remove_extension(input) + ".dct.jpg";
 
-	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, 80 });
+	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, compression });
 
 	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered + "'." << endl;
 
@@ -562,17 +565,19 @@ void do_dct(const string& input, int store, int channel, int persistence)
  * Runs the discrete wavelet transformation method.
  *
  * \param input Path to original image.
+ * \param secret Path to the data to be hidden.
  * \param store Storage mode.
  * \param channel Channels to encode.
  * \param alpha Encoding intensity.
+ * \param compression JPEG compression percentage.
  */
-void do_dwt(const string& input, int store, int channel, int alpha)
+void do_dwt(const string& input, const string& secret, int store, int channel, int alpha, int compression)
 {
 	auto img = imread(input);
 
 	show_image(img, "Original");
 
-	auto data = read_file("test/test.txt");
+	auto data = read_file(secret);
 
 	Mat stego;
 
@@ -589,7 +594,7 @@ void do_dwt(const string& input, int store, int channel, int alpha)
 
 	auto altered = remove_extension(input) + ".dwt.jpg";
 
-	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, 90 });
+	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, compression });
 
 	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered + "'." << endl;
 
@@ -656,12 +661,14 @@ main:
 		{
 		case 'l':
 		{
-			string input = "test/img.png";
+			string input  = "test/img.png";
+			string secret = "test/test.txt";
 			auto store = 1, channel = 0;
 
 		mnlsb:
 			switch (show_menu("LSB Configuration", {
 				{ 'i', "Input File:    " + input },
+				{ 'd', "Data File:     " + secret },
 				{ 's', "Storage Mode:  " + store_to_string(store) },
 				{ 'c', "Channel Usage: " + channel_to_string(channel) },
 				{ 'a', "Perform Steganography" },
@@ -670,6 +677,10 @@ main:
 			{
 			case 'i':
 				prompt_string("Input File", input, true);
+				goto mnlsb;
+
+			case 'd':
+				prompt_string("Data File", secret, true);
 				goto mnlsb;
 
 			case 's':
@@ -681,7 +692,7 @@ main:
 				goto mnlsb;
 
 			case 'a':
-				do_lsb(input, store, channel);
+				do_lsb(input, secret, store, channel);
 				cvWaitKey();
 				break;
 
@@ -693,21 +704,28 @@ main:
 
 		case 'c':
 		{
-			string input = "test/lena.jpg";
-			auto store = 1, channel = 0, persistence = 30;
+			string input  = "test/lena.jpg";
+			string secret = "test/test.txt";
+			auto store = 1, channel = 0, persistence = 30, compression = 80;
 
 		mndct:
 			switch (show_menu("DCT Configuration", {
 				{ 'i', "Input File:    " + input },
+				{ 'd', "Data File:     " + secret },
 				{ 's', "Storage Mode:  " + store_to_string(store) },
 				{ 'c', "Channel Usage: " + channel_to_string(channel) },
 				{ 'p', "Persistence:   " + to_string(persistence) + "%" },
+				{ 'j', "Compression:   " + to_string(compression) + "%" },
 				{ 'a', "Perform Steganography" },
 				{ 'b', "Back to Main Menu" }
 			}, "a"))
 			{
 			case 'i':
 				prompt_string("Input File", input, true);
+				goto mndct;
+
+			case 'd':
+				prompt_string("Data File", secret, true);
 				goto mndct;
 
 			case 's':
@@ -722,8 +740,12 @@ main:
 				prompt_int("Persistence Percentage", persistence, 0, 100);
 				goto mndct;
 
+			case 'j':
+				prompt_int("JPEG Compression Percentage", compression, 0, 100);
+				goto mndct;
+
 			case 'a':
-				do_dct(input, store, channel, persistence);
+				do_dct(input, secret, store, channel, persistence, compression);
 				cvWaitKey();
 				break;
 
@@ -735,22 +757,29 @@ main:
 
 		case 'w':
 		{
-			string input = "test/lena.jpg";
-			auto store = 1, channel = 0;
+			string input  = "test/lena.jpg";
+			string secret = "test/test.txt";
+			auto store = 1, channel = 0, compression = 90;
 			auto alpha = 0.1;
 
 		mndwt:
 			switch (show_menu("DWT Configuration", {
 				{ 'i', "Input File:    " + input },
+				{ 'd', "Data File:     " + secret },
 				{ 's', "Storage Mode:  " + store_to_string(store) },
 				{ 'c', "Channel Usage: " + channel_to_string(channel) },
 				{ 'p', "Intensity:     " + to_string(alpha) },
+				{ 'j', "Compression:   " + to_string(compression) + "%" },
 				{ 'a', "Perform Steganography" },
 				{ 'b', "Back to Main Menu" }
 			}, "a"))
 			{
 			case 'i':
 				prompt_string("Input File", input, true);
+				goto mndwt;
+
+			case 'd':
+				prompt_string("Data File", secret, true);
 				goto mndwt;
 
 			case 's':
@@ -765,8 +794,12 @@ main:
 				prompt_double("Intensity Value", alpha, 0.01, 1);
 				goto mndwt;
 
+			case 'j':
+				prompt_int("JPEG Compression Percentage", compression, 0, 100);
+				goto mndwt;
+
 			case 'a':
-				do_dwt(input, store, channel, alpha);
+				do_dwt(input, secret, store, channel, alpha, compression);
 				cvWaitKey();
 				break;
 
