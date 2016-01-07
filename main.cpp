@@ -502,6 +502,32 @@ void do_lsb(const string& input, const string& secret, int store, int channel)
 }
 
 /*!
+ * Runs the least significant bit extraction method.
+ *
+ * \param altered Path to the altered image.
+ * \param channel Channels to decode.
+ */
+void read_lsb(const string& altered, int channel)
+{
+	auto stego = imread(altered);
+
+	string output;
+
+	if (channel == 0)
+	{
+		output = decode_tlv(decode_lsb(stego));
+	}
+	else
+	{
+		output = decode_tlv(decode_lsb_alt(stego));
+	}
+
+	output = clean(output);
+
+	cout << endl << "  Extracted:" << endl << endl << Format::White << Format::Bold << output << Format::Normal << Format::Default << endl << endl;
+}
+
+/*!
  * Runs the discrete cosine transformation method.
  *
  * \param input Path to original image.
@@ -559,6 +585,37 @@ void do_dct(const string& input, const string& secret, int store, int channel, i
 	print_debug(data, output);
 
 	show_image(stego, "Altered");
+}
+
+/*!
+ * Runs the discrete cosine transformation extraction method.
+ *
+ * \param altered Path to the altered image.
+ * \param channel Channels to decode.
+ */
+void read_dct(const string& altered, int channel)
+{
+	auto stego = imread(altered);
+
+	string output;
+
+	if (channel == 0)
+	{
+		output = repair(vector<string>
+			{
+				decode_dct(stego, 0),
+				decode_dct(stego, 1),
+				decode_dct(stego, 2)
+			});
+	}
+	else
+	{
+		output = decode_dct(stego, channel - 1);
+	}
+
+	output = clean(output);
+
+	cout << endl << "  Extracted:" << endl << endl << Format::White << Format::Bold << output << Format::Normal << Format::Default << endl << endl;
 }
 
 /*!
@@ -622,6 +679,39 @@ void do_dwt(const string& input, const string& secret, int store, int channel, i
 }
 
 /*!
+ * Runs the discrete wavelet transformation extraction method.
+ *
+ * \param input Path to original image.
+ * \param altered Path to the altered image.
+ * \param channel Channels to decode.
+ */
+void read_dwt(const string& input, const string& altered, int channel)
+{
+	auto img   = imread(input);
+	auto stego = imread(altered);
+
+	string output;
+
+	if (channel == 0)
+	{
+		output = repair(vector<string>
+			{
+				decode_dwt(img, stego, 0),
+				decode_dwt(img, stego, 1),
+				decode_dwt(img, stego, 2)
+			});
+	}
+	else
+	{
+		output = decode_dwt(img, stego, channel - 1);
+	}
+
+	output = clean(output);
+
+	cout << endl << "  Extracted:" << endl << endl << Format::White << Format::Bold << output << Format::Normal << Format::Default << endl << endl;
+}
+
+/*!
  * Entry point of the application.
  *
  * \param Number of arguments.
@@ -672,8 +762,9 @@ main:
 				{ 's', "Storage Mode:  " + store_to_string(store) },
 				{ 'c', "Channel Usage: " + channel_to_string(channel) },
 				{ 'a', "Perform Steganography" },
+				{ 'x', "Perform Extraction" },
 				{ 'b', "Back to Main Menu" }
-			}, "a"))
+			}, "ax"))
 			{
 			case 'i':
 				prompt_string("Input File", input, true);
@@ -694,6 +785,11 @@ main:
 			case 'a':
 				do_lsb(input, secret, store, channel);
 				cvWaitKey();
+				break;
+
+			case 'x':
+				read_lsb(input, channel);
+				system("pause");
 				break;
 
 			case 'b':
@@ -717,8 +813,9 @@ main:
 				{ 'p', "Persistence:   " + to_string(persistence) + "%" },
 				{ 'j', "Compression:   " + to_string(compression) + "%" },
 				{ 'a', "Perform Steganography" },
+				{ 'x', "Perform Extraction" },
 				{ 'b', "Back to Main Menu" }
-			}, "a"))
+			}, "ax"))
 			{
 			case 'i':
 				prompt_string("Input File", input, true);
@@ -749,6 +846,11 @@ main:
 				cvWaitKey();
 				break;
 
+			case 'x':
+				read_dct(input, channel);
+				system("pause");
+				break;
+
 			case 'b':
 				goto main;
 			}
@@ -771,8 +873,9 @@ main:
 				{ 'p', "Intensity:     " + to_string(alpha) },
 				{ 'j', "Compression:   " + to_string(compression) + "%" },
 				{ 'a', "Perform Steganography" },
+				{ 'x', "Perform Extraction" },
 				{ 'b', "Back to Main Menu" }
-			}, "a"))
+			}, "ax"))
 			{
 			case 'i':
 				prompt_string("Input File", input, true);
@@ -801,6 +904,11 @@ main:
 			case 'a':
 				do_dwt(input, secret, store, channel, alpha, compression);
 				cvWaitKey();
+				break;
+
+			case 'x':
+				read_dwt(secret, input, channel);
+				system("pause");
 				break;
 
 			case 'b':
