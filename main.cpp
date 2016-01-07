@@ -10,6 +10,13 @@
 #include "dct.hpp"
 #include "dwt.hpp"
 #include "tlv.hpp"
+#include <thread>
+
+#if _WIN32
+	#include <conio.h>
+#else
+	#define _getche getchar
+#endif
 
 using namespace cv;
 using namespace std;
@@ -43,9 +50,9 @@ void print_debug(const string& input, const string& output)
 	}
 
 	cout << endl
-		 << "   Similarity: " << setprecision(3) << color << Format::Bold << accuracy << "%" << Format::Normal << Format::Default << endl << endl
-		 << "   Input:"       << endl << endl << Format::White << Format::Bold << original  << Format::Normal << Format::Default << endl << endl
-		 << "   Extracted:"   << endl << endl << Format::White << Format::Bold << extracted << Format::Normal << Format::Default << endl;
+		 << "  Similarity: " << setprecision(3) << color << Format::Bold << accuracy << "%" << Format::Normal << Format::Default << endl << endl
+		 << "  Input:"       << endl << endl << Format::White << Format::Bold << original  << Format::Normal << Format::Default << endl << endl
+		 << "  Extracted:"   << endl << endl << Format::White << Format::Bold << extracted << Format::Normal << Format::Default << endl;
 }
 
 /*!
@@ -206,6 +213,61 @@ void test_dwt_multi()
 }
 
 /*!
+ * Prompts the user for a selection from the available options.
+ *
+ * \param opts Available options.
+ *
+ * \return Option selected by user.
+ */
+char get_selection(const string& opts)
+{
+	cout << "  Selection: " << Format::Green << Format::Bold;
+
+	char sel;
+	while ((sel = _getche()))
+	{
+		if (opts.find(sel) != string::npos)
+		{
+			break;
+		}
+
+		cout << Format::Normal << Format::Default << endl
+			 << "  Selection: " << Format::Green << Format::Bold;
+	}
+
+	cout << Format::Normal << Format::Default << endl;
+
+	return sel;
+}
+
+/*!
+ * Builds a menu for the user and prompts a selection.
+ *
+ * \param title Title of the menu.
+ * \param opts Available options.
+ * \param actions Options which perform an action.
+ *
+ * \return Option selected by user.
+ */
+char show_menu(const string& title, const vector<pair<char, string>>& opts, const string& actions = string())
+{
+	cout << endl << "  " << title << ":" << endl;
+
+	string sels;
+
+	for (auto& p : opts)
+	{
+		sels += p.first;
+		auto color = p.first == 'b' ? Format::White : actions.find(p.first) != string::npos ? Format::Cyan : Format::Green;
+		cout << "    [" << color << Format::Bold << p.first << Format::Normal << Format::Default << "] " << Format::Bold << p.second << Format::Normal << endl;
+	}
+
+	cout << endl;
+
+	return get_selection(sels);
+}
+
+/*!
  * Entry point of the application.
  *
  * \param Number of arguments.
@@ -217,15 +279,124 @@ int main(int argc, char** argv)
 {
 	Format::Init();
 
-	//test_lsb();
-	//test_lsb_alt();
-	//test_dct();
-	test_dct_multi();
-	//test_dwt();
-	test_dwt_multi();
+	cout << Format::Yellow << Format::Bold << endl;
+	cout << "       ____ __                                                     __       " << endl;
+	cout << "      / __// /_ ___  ___ _ ___ _ ___  ___  ___ _ ____ ___ _ ___   / /  __ __" << endl;
+	cout << "     _\\ \\ / __// -_)/ _ `// _ `// _ \\/ _ \\/ _ `// __// _ `// _ \\ / _ \\/ // /" << endl;
+	cout << "    /___/ \\__/ \\__/ \\_, / \\_,_//_//_/\\___/\\_, //_/   \\_,_// .__//_//_/\\_, / " << endl;
+	cout << "                   /___/                 /___/           /_/         /___/  " << endl;
+	cout << endl;
+	cout << "                  " << Format::Red << Format::Bold << "https" << Format::Normal << Format::Red << "://" << Format::Bold << "github.com" << Format::Normal << Format::Red << "/" << Format::Bold << "RoliSoft" << Format::Normal << Format::Red << "/" << Format::Bold << "Steganography" << Format::Normal << Format::Default << endl;
 
-	cvWaitKey();
+main:
+	switch (show_menu("Available Options", {
+		{ 'i', "Image Processing" },
+		{ 'v', "Video Processing" },
+		{ 't', "Unit Tests" },
+		{ 'x', "Exit" }
+	}, "x"))
+	{
+	case 'i':
+	{
+		switch (show_menu("Technique to Use", {
+			{ 'l', "Least Significant Bit" },
+			{ 'c', "Discrete Cosine Transformation" },
+			{ 'w', "Discrete Wavelet Transformation" },
+			{ 'b', "Back to Main Menu" }
+		}))
+		{
+		case 'l':
+		{
+			show_menu("LSB Configuration", {
+				{ 'i', "Input File:    images/lena.jpg" },
+				{ 's', "Storage Mode:  Store Once, Leave Rest Random" },
+				{ 'c', "Channel Usage: Encode All Channels" },
+				{ 'a', "Perform Steganography" },
+				{ 'b', "Back to Main Menu" }
+			}, "a");
+		}
+		break;
 
-	//system("pause");
+		case 'c':
+		{
+			show_menu("DCT Configuration", {
+				{ 'i', "Input File:    images/lena.jpg" },
+				{ 's', "Storage Mode:  Store Once, Leave Rest Random" },
+				{ 'c', "Channel Usage: Encode All Channels" },
+				{ 'p', "Persistance:   30%" },
+				{ 'a', "Perform Steganography" },
+				{ 'b', "Back to Main Menu" }
+			}, "a");
+		}
+		break;
+
+		case 'w':
+		{
+			show_menu("DWT Configuration", {
+				{ 'i', "Input File:    images/lena.jpg" },
+				{ 's', "Storage Mode:  Store Once, Leave Rest Random" },
+				{ 'c', "Channel Usage: Encode All Channels" },
+				{ 'p', "Intensity:     0.1" },
+				{ 'a', "Perform Steganography" },
+				{ 'b', "Back to Main Menu" }
+			}, "a");
+		}
+		break;
+
+		case 'b':
+			goto main;
+		}
+	}
+	break;
+
+	case 'v':
+		break;
+
+	case 't':
+	{
+		switch (show_menu("Available Unit Tests", {
+			{ '1', "Least Significant Bit -- All Channels" },
+			{ '2', "Least Significant Bit -- Alternating Channels" },
+			{ '3', "Discrete Cosine Transformation -- Single Channel" },
+			{ '4', "Discrete Cosine Transformation -- All Channels w/ JPEG Compression" },
+			{ '5', "Discrete Wavelet Transformation -- Single Channel" },
+			{ '6', "Discrete Wavelet Transformation -- All Channels w/ JPEG Compression" },
+			{ 'b', "Back to Main Menu" }
+		}, "123456"))
+		{
+		case '1':
+			test_lsb();
+			cvWaitKey();
+			break;
+		case '2':
+			test_lsb_alt();
+			cvWaitKey();
+			break;
+		case '3':
+			test_dct();
+			cvWaitKey();
+			break;
+		case '4':
+			test_dct_multi();
+			cvWaitKey();
+			break;
+		case '5':
+			test_dwt();
+			cvWaitKey();
+			break;
+		case '6':
+			test_dwt_multi();
+			cvWaitKey();
+			break;
+		case 'b':
+			goto main;
+		}
+	}
+	break;
+
+	case 'x':
+		return EXIT_SUCCESS;
+	}
+	
 	return EXIT_SUCCESS;
 }
