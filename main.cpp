@@ -3,6 +3,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <boost/algorithm/string.hpp>
 #include "format.h"
 #include "helpers.hpp"
 #include "lsb.hpp"
@@ -10,7 +11,6 @@
 #include "dct.hpp"
 #include "dwt.hpp"
 #include "tlv.hpp"
-#include <thread>
 
 #if _WIN32
 	#include <conio.h>
@@ -268,6 +268,189 @@ char show_menu(const string& title, const vector<pair<char, string>>& opts, cons
 }
 
 /*!
+ * Translates a STORE_* constant into a string.
+ *
+ * \param store Constant value to translate.
+ *
+ * \return Translated value.
+ */
+string store_to_string(int store)
+{
+	switch (store)
+	{
+	case STORE_ONCE:   return "Store Once, Leave Rest Random";
+	case STORE_FULL:   return "Store Once, Fill Rest w/ Zeros";
+	case STORE_REPEAT: return "Store as Indefinitely Repeating";
+	default:           return "Unknown Mode " + to_string(store);
+	}
+}
+
+/*!
+ * Prompts the user to select a storage mode.
+ *
+ * \param store Storage variable to manipulate.
+ */
+void select_store(int& store)
+{
+	switch (show_menu("Storage Mode", {
+		{ 'o', "Store Once, Leave Rest Random" },
+		{ 'z', "Store Once, Fill Rest w/ Zeros" },
+		{ 'r', "Store as Indefinitely Repeating" },
+		{ 'b', "Back to Main Menu" }
+	}))
+	{
+	case 'o': store = STORE_ONCE;   break;
+	case 'z': store = STORE_FULL;   break;
+	case 'r': store = STORE_REPEAT; break;
+	}
+}
+
+/*!
+ * Translates the channel parameter value into a string.
+ *
+ * \param channel Parameter value to translate.
+ *
+ * \return Translated value.
+ */
+string channel_to_string(int channel)
+{
+	switch (channel)
+	{
+	case 0:  return "Encode All Channels";
+	case 1:  return "Encode Red Channel";
+	case 2:  return "Encode Green Channel";
+	case 3:  return "Encode Blue Channel";
+	default: return "Unknown Mode " + to_string(channel);
+	}
+}
+
+/*!
+ * Prompts the user to select a channel.
+ *
+ * \param channel Channel variable to manipulate.
+ */
+void select_channel(int& channel)
+{
+	switch (show_menu("Storage Mode", {
+		{ 'a', "Encode All Channels" },
+		{ 'r', "Encode Red Channel" },
+		{ 'g', "Encode Green Channel" },
+		{ 'k', "Encode Blue Channel" },
+		{ 'b', "Back to Main Menu" }
+	}))
+	{
+	case 'a': channel = 0; break;
+	case 'r': channel = 1; break;
+	case 'g': channel = 2; break;
+	case 'k': channel = 3; break;
+	}
+}
+
+/*!
+ * Prompts the user to provide a string value.
+ *
+ * \param title Name of the variable.
+ * \param value Variable to manipulate.
+ * \param checkFile Check if value is an existing file.
+ */
+void prompt_string(const string& title, string& value, bool checkFile = false)
+{
+	cout << endl << "  " << title << ": " << Format::Green << Format::Bold;
+
+	string str;
+	getline(cin, str);
+	trim(str);
+
+	cout << Format::Normal << Format::Default;
+
+	if (str.length() > 0)
+	{
+		if (checkFile)
+		{
+			ifstream fs(str);
+			if (fs.good())
+			{
+				value = str;
+			}
+			else
+			{
+				cerr << "    " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Specified file '" << str << "' does not exist." << endl;
+			}
+		}
+		else
+		{
+			value = str;
+		}
+	}
+}
+
+/*!
+ * Prompts the user to provide an integer value.
+ *
+ * \param title Name of the variable.
+ * \param value Variable to manipulate.
+ * \param min Lower limit of the value.
+ * \param max Upper limit of the value.
+ */
+void prompt_int(const string& title, int& value, int min = INT_MIN, int max = INT_MAX)
+{
+	cout << endl << "  " << title << (min != INT_MIN && max != INT_MAX ? " [" + to_string(min) + "-" + to_string(max) + "]" : "") << ": " << Format::Green << Format::Bold;
+
+	string str;
+	getline(cin, str);
+	trim(str);
+
+	cout << Format::Normal << Format::Default;
+
+	if (str.length() > 0)
+	{
+		auto num = atoi(str.c_str());
+
+		if (num <= max && num >= min)
+		{
+			value = num;
+		}
+		else
+		{
+			cerr << "    " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Specified value " << num << " out of range " << to_string(min) << " - " << to_string(max) << "." << endl;
+		}
+	}
+}
+
+/*!
+ * Prompts the user to provide a double value.
+ *
+ * \param title Name of the variable.
+ * \param value Variable to manipulate.
+ * \param min Lower limit of the value.
+ * \param max Upper limit of the value.
+ */
+void prompt_double(const string& title, double& value, double min = DBL_MIN, double max = DBL_MAX)
+{
+	cout << endl << "  " << title << (min != DBL_MIN && max != DBL_MAX ? " [" + to_string(min) + "-" + to_string(max) + "]" : "") << ": " << Format::Green << Format::Bold;
+
+	string str;
+	getline(cin, str);
+	trim(str);
+
+	cout << Format::Normal << Format::Default;
+
+	if (str.length() > 0)
+	{
+		auto num = atof(str.c_str());
+
+		if (num <= max && num >= min)
+		{
+			value = num;
+		}
+		else
+		{
+			cerr << "    " << Format::Red << Format::Bold << "Error:" << Format::Normal << Format::Default << " Specified value " << num << " out of range " << to_string(min) << " - " << to_string(max) << "." << endl;
+		}
+	}
+}
+
+/*!
  * Entry point of the application.
  *
  * \param Number of arguments.
@@ -307,39 +490,120 @@ main:
 		{
 		case 'l':
 		{
-			show_menu("LSB Configuration", {
-				{ 'i', "Input File:    images/lena.jpg" },
-				{ 's', "Storage Mode:  Store Once, Leave Rest Random" },
-				{ 'c', "Channel Usage: Encode All Channels" },
+			string input = "test/img.png";
+			auto store = 1, channel = 0;
+
+		mnlsb:
+			switch (show_menu("LSB Configuration", {
+				{ 'i', "Input File:    " + input },
+				{ 's', "Storage Mode:  " + store_to_string(store) },
+				{ 'c', "Channel Usage: " + channel_to_string(channel) },
 				{ 'a', "Perform Steganography" },
 				{ 'b', "Back to Main Menu" }
-			}, "a");
+			}, "a"))
+			{
+			case 'i':
+				prompt_string("Input File", input, true);
+				goto mnlsb;
+
+			case 's':
+				select_store(store);
+				goto mnlsb;
+
+			case 'c':
+				select_channel(channel);
+				goto mnlsb;
+
+			case 'a':
+				//do_lsb(input, store, channel);
+				goto main;
+
+			case 'b':
+				goto main;
+			}
 		}
 		break;
 
 		case 'c':
 		{
-			show_menu("DCT Configuration", {
-				{ 'i', "Input File:    images/lena.jpg" },
-				{ 's', "Storage Mode:  Store Once, Leave Rest Random" },
-				{ 'c', "Channel Usage: Encode All Channels" },
-				{ 'p', "Persistance:   30%" },
+			string input = "test/lena.jpg";
+			auto store = 1, channel = 0, persistence = 30;
+
+		mndct:
+			switch (show_menu("DCT Configuration", {
+				{ 'i', "Input File:    " + input },
+				{ 's', "Storage Mode:  " + store_to_string(store) },
+				{ 'c', "Channel Usage: " + channel_to_string(channel) },
+				{ 'p', "Persistence:   " + to_string(persistence) + "%" },
 				{ 'a', "Perform Steganography" },
 				{ 'b', "Back to Main Menu" }
-			}, "a");
+			}, "a"))
+			{
+			case 'i':
+				prompt_string("Input File", input, true);
+				goto mndct;
+
+			case 's':
+				select_store(store);
+				goto mndct;
+
+			case 'c':
+				select_channel(channel);
+				goto mndct;
+
+			case 'p':
+				prompt_int("Persistence Percentage", persistence, 0, 100);
+				goto mndct;
+
+			case 'a':
+				//do_dct(input, store, channel, persistence);
+				goto main;
+
+			case 'b':
+				goto main;
+			}
 		}
 		break;
 
 		case 'w':
 		{
-			show_menu("DWT Configuration", {
-				{ 'i', "Input File:    images/lena.jpg" },
-				{ 's', "Storage Mode:  Store Once, Leave Rest Random" },
-				{ 'c', "Channel Usage: Encode All Channels" },
-				{ 'p', "Intensity:     0.1" },
+			string input = "test/lena.jpg";
+			auto store = 1, channel = 0;
+			auto alpha = 0.1;
+
+		mndwt:
+			switch (show_menu("DWT Configuration", {
+				{ 'i', "Input File:    " + input },
+				{ 's', "Storage Mode:  " + store_to_string(store) },
+				{ 'c', "Channel Usage: " + channel_to_string(channel) },
+				{ 'p', "Intensity:     " + to_string(alpha) },
 				{ 'a', "Perform Steganography" },
 				{ 'b', "Back to Main Menu" }
-			}, "a");
+			}, "a"))
+			{
+			case 'i':
+				prompt_string("Input File", input, true);
+				goto mndwt;
+
+			case 's':
+				select_store(store);
+				goto mndwt;
+
+			case 'c':
+				select_channel(channel);
+				goto mndwt;
+
+			case 'p':
+				prompt_double("Intensity Value", alpha, 0.01, 1);
+				goto mndwt;
+
+			case 'a':
+				//do_dwt(input, store, channel, alpha);
+				goto main;
+
+			case 'b':
+				goto main;
+			}
 		}
 		break;
 
