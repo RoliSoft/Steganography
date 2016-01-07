@@ -673,12 +673,23 @@ void do_dct_vid(const string& input, const string& secret, int store, int channe
 
 	wrt.set(VIDEOWRITER_PROP_QUALITY, 100);
 
+	cout << endl << "  Processing frames..." << endl;
+
+	auto title = "Video frame";
+
+	namedWindow(title, NULL);
+	resizeWindow(title, 512, 288);
+	moveWindow(title, 50, 50);
+
 	auto data = read_file(secret);
 
 	while (cap.grab())
 	{
 		Mat frame;
 		cap.retrieve(frame);
+
+		imshow(title, frame);
+		waitKey(1);
 
 		if (channel == 0)
 		{
@@ -694,7 +705,9 @@ void do_dct_vid(const string& input, const string& secret, int store, int channe
 		wrt.write(frame);
 	}
 
-	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered video written to '" << altered << "'." << endl;
+	destroyWindow(title);
+
+	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered video written to '" << altered << "'." << endl << endl;
 }
 
 /*!
@@ -713,12 +726,23 @@ void read_dct_vid(const string& altered, int channel)
 		return;
 	}
 
+	cout << endl << "  Decoding frames..." << endl;
+
+	auto title = "Video frame";
+
+	namedWindow(title, NULL);
+	resizeWindow(title, 512, 288);
+	moveWindow(title, 50, 50);
+
 	vector<string> strings;
 
 	while (cap.grab())
 	{
 		Mat frame;
 		cap.retrieve(frame);
+
+		imshow(title, frame);
+		waitKey(1);
 
 		if (channel == 0)
 		{
@@ -731,6 +755,10 @@ void read_dct_vid(const string& altered, int channel)
 			strings.push_back(decode_dct(frame, channel - 1));
 		}
 	}
+
+	destroyWindow(title);
+
+	cout << "  Reconstructing message..." << endl;
 
 	auto output = clean(repair(strings));
 
@@ -1100,7 +1128,7 @@ main:
 
 		case 'a':
 			do_dct_vid(input, secret, store, channel, persistence);
-			cvWaitKey();
+			system("pause");
 			break;
 
 		case 'x':
