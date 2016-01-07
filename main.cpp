@@ -317,9 +317,9 @@ string channel_to_string(int channel)
 	switch (channel)
 	{
 	case 0:  return "Encode All Channels";
-	case 1:  return "Encode Red Channel";
+	case 1:  return "Encode Blue Channel";
 	case 2:  return "Encode Green Channel";
-	case 3:  return "Encode Blue Channel";
+	case 3:  return "Encode Red Channel";
 	default: return "Unknown Mode " + to_string(channel);
 	}
 }
@@ -333,16 +333,16 @@ void select_channel(int& channel)
 {
 	switch (show_menu("Storage Mode", {
 		{ 'a', "Encode All Channels" },
-		{ 'r', "Encode Red Channel" },
-		{ 'g', "Encode Green Channel" },
 		{ 'k', "Encode Blue Channel" },
+		{ 'g', "Encode Green Channel" },
+		{ 'r', "Encode Red Channel" },
 		{ 'b', "Back to Main Menu" }
 	}))
 	{
 	case 'a': channel = 0; break;
-	case 'r': channel = 1; break;
+	case 'k': channel = 1; break;
 	case 'g': channel = 2; break;
-	case 'k': channel = 3; break;
+	case 'r': channel = 3; break;
 	}
 }
 
@@ -451,6 +451,172 @@ void prompt_double(const string& title, double& value, double min = DBL_MIN, dou
 }
 
 /*!
+ * Runs the least significant bit method.
+ *
+ * \param input Path to original image.
+ * \param store Storage mode.
+ * \param channel Channels to encode.
+ */
+void do_lsb(const string& input, int store, int channel)
+{
+	auto img = imread(input);
+
+	show_image(img, "Original");
+
+	auto data = read_file("test/test.txt");
+
+	Mat stego;
+
+	if (channel == 0)
+	{
+		stego = encode_lsb(img, encode_tlv(data), store);
+	}
+	else
+	{
+		stego = encode_lsb_alt(img, encode_tlv(data), store);
+	}
+
+	auto altered = remove_extension(input) + ".lsb.png";
+
+	imwrite(altered, stego);
+
+	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered + "'." << endl;
+
+	stego = imread(altered);
+
+	string output;
+
+	if (channel == 0)
+	{
+		output = decode_tlv(decode_lsb(stego));
+	}
+	else
+	{
+		output = decode_tlv(decode_lsb_alt(stego));
+	}
+
+	print_debug(data, output);
+
+	show_image(stego, "Altered");
+}
+
+/*!
+ * Runs the discrete cosine transformation method.
+ *
+ * \param input Path to original image.
+ * \param store Storage mode.
+ * \param channel Channels to encode.
+ * \param persistence Persistence value.
+ */
+void do_dct(const string& input, int store, int channel, int persistence)
+{
+	auto img = imread(input);
+
+	show_image(img, "Original");
+
+	auto data = read_file("test/test.txt");
+
+	Mat stego;
+
+	if (channel == 0)
+	{
+		stego = encode_dct(img,   data, store, 0, persistence);
+		stego = encode_dct(stego, data, store, 1, persistence);
+		stego = encode_dct(stego, data, store, 2, persistence);
+	}
+	else
+	{
+		stego = encode_dct(img, data, store, channel - 1, persistence);
+	}
+
+	auto altered = remove_extension(input) + ".dct.jpg";
+
+	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, 80 });
+
+	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered + "'." << endl;
+
+	stego = imread(altered);
+
+	string output;
+
+	if (channel == 0)
+	{
+		output = repair(vector<string>
+			{
+				decode_dct(stego, 0),
+				decode_dct(stego, 1),
+				decode_dct(stego, 2)
+			});
+	}
+	else
+	{
+		output = decode_dct(stego, channel - 1);
+	}
+
+	print_debug(data, output);
+
+	show_image(stego, "Altered");
+}
+
+/*!
+ * Runs the discrete wavelet transformation method.
+ *
+ * \param input Path to original image.
+ * \param store Storage mode.
+ * \param channel Channels to encode.
+ * \param alpha Encoding intensity.
+ */
+void do_dwt(const string& input, int store, int channel, int alpha)
+{
+	auto img = imread(input);
+
+	show_image(img, "Original");
+
+	auto data = read_file("test/test.txt");
+
+	Mat stego;
+
+	if (channel == 0)
+	{
+		stego = encode_dwt(img,   data, store, 0, alpha);
+		stego = encode_dwt(stego, data, store, 1, alpha);
+		stego = encode_dwt(stego, data, store, 2, alpha);
+	}
+	else
+	{
+		stego = encode_dwt(img, data, store, channel - 1, alpha);
+	}
+
+	auto altered = remove_extension(input) + ".dwt.jpg";
+
+	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, 90 });
+
+	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered + "'." << endl;
+
+	stego = imread(altered);
+
+	string output;
+
+	if (channel == 0)
+	{
+		output = repair(vector<string>
+			{
+				decode_dwt(img, stego, 0),
+				decode_dwt(img, stego, 1),
+				decode_dwt(img, stego, 2)
+			});
+	}
+	else
+	{
+		output = decode_dwt(img, stego, channel - 1);
+	}
+
+	print_debug(data, output);
+
+	show_image(stego, "Altered");
+}
+
+/*!
  * Entry point of the application.
  *
  * \param Number of arguments.
@@ -515,8 +681,9 @@ main:
 				goto mnlsb;
 
 			case 'a':
-				//do_lsb(input, store, channel);
-				goto main;
+				do_lsb(input, store, channel);
+				cvWaitKey();
+				break;
 
 			case 'b':
 				goto main;
@@ -556,8 +723,9 @@ main:
 				goto mndct;
 
 			case 'a':
-				//do_dct(input, store, channel, persistence);
-				goto main;
+				do_dct(input, store, channel, persistence);
+				cvWaitKey();
+				break;
 
 			case 'b':
 				goto main;
@@ -598,8 +766,9 @@ main:
 				goto mndwt;
 
 			case 'a':
-				//do_dwt(input, store, channel, alpha);
-				goto main;
+				do_dwt(input, store, channel, alpha);
+				cvWaitKey();
+				break;
 
 			case 'b':
 				goto main;

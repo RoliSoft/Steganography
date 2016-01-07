@@ -97,6 +97,25 @@ inline std::string read_file(const std::string& file)
 }
 
 /*!
+ * Provides a primitive way to remove the file extension.
+ *
+ * \param file File name or path.
+ *
+ * \param File name or path without extension.
+ */
+inline std::string remove_extension(const std::string& file)
+{
+	auto dot = file.find_last_of(".");
+
+	if (dot == std::string::npos)
+	{
+		return file;
+	}
+
+	return file.substr(0, dot);
+}
+
+/*!
  * Removes non-printable characters from the input and trims any leading or trailing whitespace.
  *
  * \param text Text to be cleaned.
