@@ -18,6 +18,8 @@ Uses [DCT](http://docs.opencv.org/2.4/modules/core/doc/operations_on_arrays.html
 
 This method can survive an 80% JPEG compression while keeping the data completely intact and without introducing any significant visual degradation to the image during the hiding process. Better survival rates can be achieved, by using multiple channels and a bigger persistence value, however visual degradation may start appearing depending on the image being used.
 
+This technique also works for video steganography. While video compression can introduce a heavy data loss in regards to steganographic artifacts, a high-enough-bitrate H.264-encoded video (such as the supplied test file) can be processed and re-encoded, resulting in the same file size, same image quality, and reproducible hidden content.
+
 Further information regarding this method is available in [Lin, Yih-Kai. "A data hiding scheme based upon DCT coefficient modification." _Computer Standards & Interfaces_ 36.5 (2014): 855-862.](http://ms12.voip.edu.tw/~paul/Papper/Steganography/DCT/A_data_hiding_scheme_based_upon_DCT_coefficient_modification.pdf)
 
 ### Discrete Wavelet Transformation
@@ -43,5 +45,11 @@ In order to hide the data from easy fingerprinting, this is not a true tag-lengt
 In order to facilitate the use of multiple channels with multiple methods, there is a function to compare the output of each method per channel and try to reconstruct the original message by picking the most frequent character for each index within the specified method outputs.
 
 This way, minor to major errors, depending on the quality of the outputs, can be corrected. In order for the algorithm to properly function, it requires at least 3 strings from different channels or methods.
+
+## Building
+
+The project was originally developed under Visual Studio 2015 and linked against OpenCV 3.1 x64, however the application should be compilable under any modern operating system, as Windows-specific calls and structs were aliased to their POSIX equivalents and handled accordingly.
+
+Under Windows, the `opencv_world310[d].dll` file is the only required dependency during runtime for the image processing features. For the video processing features `opencv_ffmpeg310[_64].dll` will also be required, and optionally an encoder/decoder library to handle various video formats. To process H.264 videos, including the supplied test video, the `openh264-1.4.0-win[64|32]msvc.dll` file can be downloaded from [cisco/openh264](https://github.com/cisco/openh264/releases).
 
 ![Screenshot](https://i.imgur.com/509HbZN.jpg)
