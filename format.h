@@ -11,6 +11,8 @@
 	#define fileno(s) _fileno(s)
 #elif __unix__
 	#include <unistd.h>
+#elif __APPLE__
+	#include <unistd.h>
 #endif
 
 /*!
@@ -47,6 +49,17 @@ namespace Format
 		White   = 37,
 		Default = 39
 
+#elif __APPLE__
+
+		Red     = 31,
+		Green   = 32,
+		Blue    = 34,
+		Yellow  = 33,
+		Magenta = 35,
+		Cyan    = 36,
+		White   = 37,
+		Default = 39
+
 #endif
 	};
 
@@ -65,6 +78,15 @@ namespace Format
 		Normal    = INT_MAX
 
 #elif __unix__
+
+		Bold       = 1,
+		Underline  = 4,
+		Blink      = 5,
+		Reverse    = 7,
+		Hidden     = 8,
+		Normal     = 0
+
+#elif __APPLE__
 
 		Bold       = 1,
 		Underline  = 4,
