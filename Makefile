@@ -1,6 +1,6 @@
 CC:=g++
-LDFLAGS:=$(shell pkg-config --cflags --libs /usr/local/Cellar/opencv/4.2.0_1/lib/pkgconfig/opencv4.pc)
-CFLAGS:=--std=c++14
+LDFLAGS:=$(shell pkg-config --cflags --libs /usr/local/Cellar/opencv/*/lib/pkgconfig/opencv4.pc)
+CFLAGS:=--std=c++14 -ggdb
 SRC_FILES:=$(wildcard ./*.cpp)
 OBJ_FILES:=$(patsubst %.cpp,obj/%.o,$(SRC_FILES))
 
