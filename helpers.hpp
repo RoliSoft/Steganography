@@ -5,6 +5,9 @@
 #include <unordered_map>
 #include <boost/algorithm/string.hpp>
 #include <opencv2/core/core.hpp>
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/imgproc.hpp"
 
 /*!
  * Stores the specified input once.
@@ -33,7 +36,7 @@ inline float similarity(const std::string& original, const std::string& extracte
 {
 	auto hits = 0;
 
-	for (int i = 0; i < min(original.length(), extracted.length()); i++)
+	for (int i = 0; i < fmin(original.length(), extracted.length()); i++)
 	{
 		if (original[i] == extracted[i])
 		{
@@ -135,18 +138,6 @@ inline std::string clean(const std::string& text)
 }
 
 /*!
- * Converts a cv::Mat object instance into an IplImage instance pointer.
- *
- * \param img Image in new format.
- *
- * \return Image in old format.
- */
-inline IplImage* cvmatToArr(const cv::Mat& img)
-{
-	return new IplImage(img);
-}
-
-/*!
  * Displays the histogram of the specified image.
  *
  * \param mat Input image.
@@ -187,6 +178,6 @@ inline void showHistogram(const cv::Mat& mat, const char* title = "Histogram")
 		line(histImage, Point(bin_w*(i - 1), hist_h - r_hist.at<float>(i - 1)), Point(bin_w*i, hist_h - r_hist.at<float>(i)), Scalar(0, 0, 255), 1, 8, 0);
 	}
 
-	namedWindow(title, CV_WINDOW_AUTOSIZE);
+	namedWindow(title, WINDOW_AUTOSIZE);
 	imshow(title, histImage);
 }

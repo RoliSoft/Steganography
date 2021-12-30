@@ -45,7 +45,7 @@ inline cv::Mat encode_dct(const cv::Mat& img, const std::string& text, int mode 
 
 			auto a = trans.at<float>(6, 7);
 			auto b = trans.at<float>(5, 1);
-			
+
 			if (i >= size)
 			{
 				if (mode == STORE_ONCE)

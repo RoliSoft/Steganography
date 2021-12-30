@@ -66,7 +66,7 @@ void show_image(const Mat& img, const string& modifier = "", bool histogram = tr
 
 	auto title = modifier.empty() ? "Image " + to_string(i) : modifier + " Image";
 
-	namedWindow(title, NULL);
+	namedWindow(title);
 	resizeWindow(title, 512, 512);
 	moveWindow(title, 50 + (515 * (i - 1)), 50);
 	imshow(title, img);
@@ -149,7 +149,7 @@ void test_dct_multi()
 	     stego = encode_dct(stego, input, STORE_FULL, 1);
 		 stego = encode_dct(stego, input, STORE_FULL, 2);
 
-	imwrite("test/lena_dct.jpg", stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, 80 });
+	imwrite("test/lena_dct.jpg", stego, vector<int> { IMWRITE_JPEG_QUALITY, 80 });
 	stego = imread("test/lena_dct.jpg");
 
 	auto output = repair(vector<string>
@@ -197,7 +197,7 @@ void test_dwt_multi()
 	     stego = encode_dwt(stego, input, STORE_FULL, 1);
 		 stego = encode_dwt(stego, input, STORE_FULL, 2);
 
-	imwrite("test/lena_dwt.jpg", stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, 90 });
+	imwrite("test/lena_dwt.jpg", stego, vector<int> { IMWRITE_JPEG_QUALITY, 90 });
 	stego = imread("test/lena_dwt.jpg");
 
 	auto output = repair(vector<string>
@@ -578,7 +578,7 @@ void do_dct(const string& input, const string& secret, int store, int channel, i
 
 	auto altered = remove_extension(input) + ".dct.jpg";
 
-	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, compression });
+	imwrite(altered, stego, vector<int> { IMWRITE_JPEG_QUALITY, compression });
 
 	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered << "'." << endl;
 
@@ -663,7 +663,7 @@ void do_dct_vid(const string& input, const string& secret, int store, int channe
 
 	auto altered = remove_extension(input) + ".dct.mp4";
 
-	VideoWriter wrt(altered, cap.get(CV_CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS), Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
+	VideoWriter wrt(altered, cap.get(CAP_PROP_FOURCC), cap.get(CAP_PROP_FPS), Size(cap.get(CAP_PROP_FRAME_WIDTH), cap.get(CAP_PROP_FRAME_HEIGHT)));
 
 	if (!wrt.isOpened())
 	{
@@ -677,7 +677,7 @@ void do_dct_vid(const string& input, const string& secret, int store, int channe
 
 	auto title = "Video frame";
 
-	namedWindow(title, NULL);
+	namedWindow(title);
 	resizeWindow(title, 512, 288);
 	moveWindow(title, 50, 50);
 
@@ -730,7 +730,7 @@ void read_dct_vid(const string& altered, int channel)
 
 	auto title = "Video frame";
 
-	namedWindow(title, NULL);
+	namedWindow(title);
 	resizeWindow(title, 512, 288);
 	moveWindow(title, 50, 50);
 
@@ -804,7 +804,7 @@ void do_dwt(const string& input, const string& secret, int store, int channel, d
 
 	auto altered = remove_extension(input) + ".dwt.jpg";
 
-	imwrite(altered, stego, vector<int> { CV_IMWRITE_JPEG_QUALITY, compression });
+	imwrite(altered, stego, vector<int> { IMWRITE_JPEG_QUALITY, compression });
 
 	cout << endl << "  " << Format::Green << Format::Bold << "Success:" << Format::Normal << Format::Default << " Altered image written to '" << altered << "'." << endl;
 
@@ -949,7 +949,7 @@ main:
 
 			case 'a':
 				do_lsb(input, secret, store, channel);
-				cvWaitKey();
+				waitKey();
 				break;
 
 			case 'x':
@@ -1008,7 +1008,7 @@ main:
 
 			case 'a':
 				do_dct(input, secret, store, channel, persistence, compression);
-				cvWaitKey();
+				waitKey();
 				break;
 
 			case 'x':
@@ -1068,7 +1068,7 @@ main:
 
 			case 'a':
 				do_dwt(input, secret, store, channel, alpha, compression);
-				cvWaitKey();
+				waitKey();
 				break;
 
 			case 'x':
@@ -1156,27 +1156,27 @@ main:
 		{
 		case '1':
 			test_lsb();
-			cvWaitKey();
+			waitKey();
 			break;
 		case '2':
 			test_lsb_alt();
-			cvWaitKey();
+			waitKey();
 			break;
 		case '3':
 			test_dct();
-			cvWaitKey();
+			waitKey();
 			break;
 		case '4':
 			test_dct_multi();
-			cvWaitKey();
+			waitKey();
 			break;
 		case '5':
 			test_dwt();
-			cvWaitKey();
+			waitKey();
 			break;
 		case '6':
 			test_dwt_multi();
-			cvWaitKey();
+			waitKey();
 			break;
 		case 'b':
 			goto main;
@@ -1187,6 +1187,6 @@ main:
 	case 'x':
 		return EXIT_SUCCESS;
 	}
-	
+
 	return EXIT_SUCCESS;
 }
